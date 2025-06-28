@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <style>
+  .logout-button {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  background-color: #F97316;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  text-decoration: none;
+  font-weight: bold;
+  transition: background-color 0.2s ease;
+}
+
+.logout-button:hover {
+  background-color: #e55b04;
+}
+
+  
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 30px auto;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+      padding: 14px 16px;
+      border: 1px solid #ddd;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    th {
+      background: #004d66;
+      color: white;
+      font-weight: 600;
+    }
+
+    td a {
+      color: #004d66;
+      font-weight: 500;
+      text-decoration: underline;
+    }
+
+    .header {
+      background: linear-gradient(to right, #003366, #004d66);
+      color: white;
+      padding: 30px 20px;
+      text-align: center;
+      border-bottom-left-radius: 28px;
+      border-bottom-right-radius: 28px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f4f8;
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Admin Dashboard</h1>
+    <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
+
+  </div>
+
+  <main class="form-container">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Grade</th>
+          <th>Activities</th>
+          <th>PDF</th>
+          <th>Uploads</th> <!-- ✅ Added header -->
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td>{{ row['id'] }}</td>
+          <td>{{ row['student_name'] }}</td>
+          <td>{{ row['email'] }}</td>
+          <td>{{ row['phone'] }}</td>
+          <td>{{ row['grade'] }}</td>
+          <td>
+            {% if row.activities %}
+              {{ row.activities | length }} included
+            {% else %}
+              <span style="color: gray;">No activities</span>
+            {% endif %}
+          </td>
+          <td>
+            <a href="{{ url_for('download_response_pdf', app_id=row['id']) }}">Download</a>
+          </td>
+          <td>
+            {% if row['grade_report_path'] %}
+              <a href="{{ url_for('static', filename=row['grade_report_path'].split('static/')[-1]) }}" target="_blank">Grade Report</a><br>
+            {% endif %}
+            {% if row['upload_path'] %}
+              <a href="{{ url_for('static', filename=row['upload_path'].split('static/')[-1]) }}" target="_blank">Optional Upload</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </main>
+</body>
+</html>

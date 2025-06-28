@@ -1,0 +1,109 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PEAR Application Portal</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <script defer src="/static/form.js"></script>
+</head>
+<body>
+  <header class="header">
+    <h1>PEAR Application Portal</h1>
+    <p>Program for Excellence in African Research</p>
+  </header>
+
+  <main class="form-container">
+    <div class="progressbar">
+      <div class="progress-step active" data-title="Basic"></div>
+      <div class="progress-step" data-title="Academics"></div>
+      <div class="progress-step" data-title="Activities"></div>
+      <div class="progress-step" data-title="Essays"></div>
+      <div class="progress-step" data-title="Review"></div>
+    </div>
+
+
+<form id="application-form" action="/submit" method="POST" enctype="multipart/form-data"><section class="form-step active">
+  <h2>Basic Information</h2>
+  <label>Student Name<input name="student_name" required /></label>
+  <label>Gender
+    <select name="student_gender" required>
+      <option value="">Select</option>
+      <option>Male</option>
+      <option>Female</option>
+      <option>Other</option>
+    </select>
+  </label>
+  <label>If Other, specify<input name="student_gender_other" /></label>
+  <label>Date of Birth<input type="date" name="dob" required /></label>
+  <label>Email<input type="email" name="email" required /></label>
+  <label>Phone<input name="phone" required /></label>
+<label>Grade
+    <select name="grade" required>
+      <option value="">Select</option>
+      <option>SS1</option><option>SS2</option><option>SS3</option>
+      <option>Year 9</option><option>Year 10</option><option>Year 11</option><option>Year 12</option><option>IB1</option>
+    </select>
+  </label>
+<label>Parent Name<input name="parent_name" required /></label>
+        <label>Parent Contact<input name="parent_contact" required /></label>
+
+  <div class="step-buttons">
+    <button type="button" class="next-btn">Next</button>
+  </div>
+</section><section class="form-step">
+        <h2>Academic Information</h2>
+
+        <label>School Name<input name="school_name" required /></label>
+        <label>School Location<input name="school_location" required /></label>
+        <label>School Contact<input name="school_contact" required /></label>
+        <label>Teacher Name<input name="teacher_name" required /></label>
+        <label>Teacher Contact<input name="teacher_contact" required /></label>
+<label>Teacher Email<input type="email" name="teacher_email" required /></label>
+        <label>Please List the subjects you took during the most recent school year<input name="subjects" required /></label>
+        <label>What are your academic interests or fields you'd like to explore? (e.g. AI, Biomedical Engineering, Finance)<input name="interests" required /></label>
+<label>Upload your most recent grade report (PDF or image)<input type="file" name="grade_report" accept=".pdf,.jpg,.jpeg,.png" required /></label>
+        
+        <div class="step-buttons">
+          <button type="button" class="prev-btn">Back</button>
+          <button type="button" class="next-btn">Next</button>
+        </div>
+      </section>
+      <section class="form-step">
+  <h2>Activities</h2>
+  <div id="activities-container"></div>
+  <button type="button" id="add-activity">➕ Add Activity</button>
+  <div class="step-buttons">
+    <button type="button" class="prev-btn">Back</button>
+    <button type="button" class="next-btn">Next</button>
+  </div>
+</section>
+
+      <section class="form-step">
+        <h2>Essays</h2>
+        <label>Tell us about something scientific or technical you recently learned that excited you. What made it interesting to you? (max 150 words)<textarea name="essay1" required></textarea></label>
+        <label>PEAR hopes to bring people with diverse backgrounds together to collaborate, from tackling Africa’s biggest challenges to lending a helping hand. Describe one way you have collaborated with others to learn from them, with them, or contribute to your community together. (max 200 words)<textarea name="essay2" required></textarea></label>
+        <label>Why do you want to be part of the PEAR Summer Program? What are you hoping to learn or take away from it? (max 150 words)<textarea name="essay3" required></textarea></label>
+        <label>Optional Upload<input type="file" name="upload" /></label>
+        <label>Optional Info or Notes about Your Upload
+  <input name="optional_info" placeholder="e.g. This file contains certificates..." />
+</label>
+        <div class="step-buttons">
+          <button type="button" class="prev-btn">Back</button>
+          <button type="button" class="next-btn">Review</button>
+        </div>
+      </section><section class="form-step">
+        <h2>Review Your Application</h2>
+        <p>Please confirm your information below before submitting:</p>
+        <div id="review-content" style="white-space: pre-wrap; background: #f9f9f9; padding: 15px; border-radius: 10px; border: 1px solid #ccc;"></div>
+        <div class="step-buttons">
+          <button type="button" class="prev-btn">Back</button>
+          <button type="submit">Submit</button>
+        </div>
+      </section></form>
+  </main>
+
+
+</body>
+</html>

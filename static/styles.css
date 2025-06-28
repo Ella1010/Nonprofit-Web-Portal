@@ -1,0 +1,112 @@
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: #f0f4f8;
+  margin: 0;
+  padding: 0;
+}
+.header {
+  background: linear-gradient(135deg, #001f3f, #6f42c1, #0074D9, #00BFFF);
+  background-size: 300% 300%;
+  animation: gradientSlide 10s ease infinite;
+  color: white;
+  padding: 60px 30px;
+  text-align: center;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  border-bottom-left-radius: 28px;
+  border-bottom-right-radius: 28px;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(to right, #003366, #004d66);
+  color: white;
+  padding: 30px 20px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+.header h1 {
+  margin: 0;
+  font-size: 28px;
+}
+.form-container {
+  max-width: 700px;
+  margin: 40px auto;
+  background: #fff;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+form label {
+  display: block;
+  margin-bottom: 15px;
+  font-weight: 500;
+}
+form input, form select, form textarea {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  margin-top: 5px;
+  font-size: 14px;
+}
+textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+button {
+  padding: 12px 20px;
+  background: #004d66;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+}
+button:hover {
+  background: #005580;
+}
+.step-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+.progressbar {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  margin: 0 0 40px;
+}
+.progress-step {
+  width: 25px;
+  height: 25px;
+  background: #ccc;
+  border-radius: 50%;
+  position: relative;
+}
+.progress-step::before {
+  content: attr(data-title);
+  position: absolute;
+  top: 35px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: #333;
+}
+.progress-step.active {
+  background: #004d66;
+}
+.form-step {
+  display: none;
+}
+.form-step.active {
+  display: block;
+  animation: fadeIn 0.4s ease-in-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes gradientSlide {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}

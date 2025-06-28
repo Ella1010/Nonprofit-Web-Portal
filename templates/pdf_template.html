@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>PEAR Application PDF</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    h1, h2 {
+      color: #003366;
+    }
+    .section {
+      margin-bottom: 20px;
+    }
+    .activity {
+      margin-bottom: 10px;
+    }
+    a {
+      color: #003366;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h1>PEAR Application Preview</h1>
+
+  <div class="section">
+    <h2>Basic Information</h2>
+    <p><strong>Name:</strong> {{ app_data.student_name }}</p>
+    <p><strong>Gender:</strong> {{ app_data.student_gender }}</p>
+    <p><strong>Date of Birth:</strong> {{ app_data.dob }}</p>
+    <p><strong>Email:</strong> {{ app_data.email }}</p>
+    <p><strong>Phone:</strong> {{ app_data.phone }}</p>
+    <p><strong>Grade:</strong> {{ app_data.grade }}</p>
+    <p><strong>Parent Name:</strong> {{ app_data.parent_name }}</p>
+    <p><strong>Parent Contact:</strong> {{ app_data.parent_contact }}</p>
+  </div>
+
+  <div class="section">
+    <h2>Academic Information</h2>
+    <p><strong>School Name:</strong> {{ app_data.school_name }}</p>
+    <p><strong>School Location:</strong> {{ app_data.school_location }}</p>
+    <p><strong>Teacher Name:</strong> {{ app_data.teacher_name }}</p>
+    <p><strong>Teacher Contact:</strong> {{ app_data.teacher_contact }}</p>
+    <p><strong>Subjects:</strong> {{ app_data.subjects }}</p>
+    <p><strong>Academic Interests:</strong> {{ app_data.interests }}</p>
+    <p><strong>Accommodation:</strong> {{ app_data.accommodation_required }}</p>
+    {% if app_data.accommodation_required == "Yes" %}
+      <p><strong>Accommodation Comment:</strong> {{ app_data.accommodation_comment }}</p>
+    {% endif %}
+  </div>
+
+  <div class="section">
+    <h2>Essays</h2>
+    <p><strong>Essay 1:</strong><br>{{ app_data.essay1 }}</p>
+    <p><strong>Essay 2:</strong><br>{{ app_data.essay2 }}</p>
+    <p><strong>Essay 3:</strong><br>{{ app_data.essay3 }}</p>
+  </div>
+
+  <div class="section">
+    <h2>Activities</h2>
+    {% if activities %}
+      {% for act in activities %}
+        <div class="activity">
+          <p><strong>{{ act.activity_type }}</strong><br>
+          Position: {{ act.activity_position }}<br>
+          Organization: {{ act.activity_org }}<br>
+          Description: {{ act.activity_desc }}</p>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p>No activities submitted.</p>
+    {% endif %}
+  </div>
+
+  <div class="section">
+    <h2>Uploads</h2>
+    {% if app_data.grade_report_path %}
+      <p><strong>Grade Report:</strong>
+        <a href="{{ request.url_root ~ app_data.grade_report_path }}">
+          {{ request.url_root ~ app_data.grade_report_path }}
+        </a>
+      </p>
+    {% endif %}
+    {% if app_data.upload_path %}
+      <p><strong>Optional Upload:</strong>
+        <a href="{{ request.url_root ~ app_data.upload_path }}">
+          {{ request.url_root ~ app_data.upload_path }}
+        </a>
+      </p>
+    {% endif %}
+  </div>
+</body>
+</html>

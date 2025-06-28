@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Confirmation</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <div class="header">
+    <h1>Application Received</h1>
+  </div>
+  <div class="form-container">
+    <h2 style="color:#004d66;">🎉 Thank You, {{ session.student_name }}!</h2>
+    <p>Your application has been submitted successfully.</p>
+    <p>A confirmation email has been sent to <strong>{{ session.email }}</strong>.</p>
+  </div>
+</body>
+</html>
+
+
