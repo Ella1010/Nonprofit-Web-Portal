@@ -1,0 +1,55 @@
+# Python bytecode files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+.env/
+.envrc
+*.env
+
+# Environment variables and config
+.env
+*.sqlite3
+instance/
+config.py
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+*.bak
+
+# Uploaded/static media (optional)
+static/uploads/
+uploads/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# IDE/editor folders
+.vscode/
+.idea/
+
+# Python egg files
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Pytest cache
+.pytest_cache/
+
+# Compiled files
+*.so
+
+# Runtime files
+*.pid
+
+# Render, Gunicorn, and deployment
+Procfile
+runtime.txt
