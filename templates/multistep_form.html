@@ -5,14 +5,32 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>PEAR Application Portal</title>
+
   <link rel="stylesheet" href="/static/styles.css" />
-  <script defer src="/static/form.js"></script>
+<!--<script defer src="/static/form.js"></script>-->
+
+
 </head>
 <body>
-  <header class="header">
-    <h1>PEAR Application Portal</h1>
-    <p>Program for Excellence in African Research</p>
-  </header>
+  <header style="background: linear-gradient(to right, #003366, #004d66); color: white; padding: 30px 20px; text-align: center; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); border-bottom-left-radius: 28px; border-bottom-right-radius: 28px; position: relative;">
+  <h1 style="margin: 0; font-size: 28px;">PEAR Application Portal</h1>
+  <p style="margin: 8px 0 0; font-size: 16px;">Program for Excellence in African Research</p>
+
+  {% if session.student_name %}
+    <div style="position: absolute; top: 15px; right: 20px; display: flex; align-items: center; gap: 10px; background: rgba(255, 255, 255, 0.15); padding: 8px 12px; border-radius: 10px;">
+      <span style="font-size: 14px; color: #ffffff;">
+        Welcome, <strong>{{ session.student_name }}</strong>
+      </span>
+      <form action="/logout_user" method="GET" style="margin: 0;">
+        <button type="submit" style="padding: 6px 12px; background: white; color: #004d66; border: none; border-radius: 6px; font-weight: 500; cursor: pointer;">
+          Logout
+        </button>
+      </form>
+    </div>
+  {% endif %}
+</header>
+
+
 
   <main class="form-container">
     <div class="progressbar">
@@ -24,52 +42,120 @@
     </div>
 
 
-<form id="application-form" action="/submit" method="POST" enctype="multipart/form-data"><section class="form-step active">
-  <h2>Basic Information</h2>
-  <label>Student Name<input name="student_name" required /></label>
-  <label>Gender
-    <select name="student_gender" required>
-      <option value="">Select</option>
-      <option>Male</option>
-      <option>Female</option>
-      <option>Other</option>
-    </select>
-  </label>
-  <label>If Other, specify<input name="student_gender_other" /></label>
-  <label>Date of Birth<input type="date" name="dob" required /></label>
-  <label>Email<input type="email" name="email" required /></label>
-  <label>Phone<input name="phone" required /></label>
-<label>Grade
-    <select name="grade" required>
-      <option value="">Select</option>
-      <option>SS1</option><option>SS2</option><option>SS3</option>
-      <option>Year 9</option><option>Year 10</option><option>Year 11</option><option>Year 12</option><option>IB1</option>
-    </select>
-  </label>
-<label>Parent/Guardian Name<input name="parent_name" required /></label>
-        <label>Parent/Guardian Contact<input name="parent_contact" required /></label>
+<form id="application-form" action="/submit" method="POST" enctype="multipart/form-data">
+  <section class="form-step active">
+    <h2>Basic Information</h2>
 
-  <div class="step-buttons">
-    <button type="button" class="next-btn">Next</button>
-  </div>
-</section><section class="form-step">
-        <h2>Academic Information</h2>
+    <label>Student Name
+      <input name="student_name" required value="{{ draft.student_name or '' }}">
+    </label>
 
-        <label>School Name<input name="school_name" required /></label>
-        <label>School Location<input name="school_location" required /></label>
-        <label>School Contact<input name="school_contact" required /></label>
-        <label>Teacher Name<input name="teacher_name" required /></label>
-        <label>Teacher Contact<input name="teacher_contact" required /></label>
-<label>Teacher Email<input type="email" name="teacher_email" required /></label>
-        <label>Please List the subjects you took during the most recent school year<input name="subjects" required /></label>
-        <label>What are your academic interests or fields you'd like to explore? (e.g. AI, Biomedical Engineering, Finance)<input name="interests" required /></label>
-<label>Upload your most recent grade report (PDF or image)<input type="file" name="grade_report" accept=".pdf,.jpg,.jpeg,.png" required /></label>
-        
-        <div class="step-buttons">
-          <button type="button" class="prev-btn">Back</button>
-          <button type="button" class="next-btn">Next</button>
-        </div>
-      </section>
+    <label>Gender
+      <select name="student_gender" required>
+        <option value="">Select</option>
+        <option value="Male" {% if draft and draft.student_gender == 'Male' %}selected{% endif %}>Male</option>
+        <option value="Female" {% if draft and draft.student_gender == 'Female' %}selected{% endif %}>Female</option>
+       
+      </select>
+    </label>
+
+
+
+    <label>Date of Birth
+      <input type="date" name="dob" required value="{{ draft.dob or '' }}">
+    </label>
+
+    <label>Student Email
+      <input type="email" name="email" required value="{{ draft.email or '' }}">
+    </label>
+
+
+
+ <label>Student Contact
+  <input name="phone" placeholder="+2348123456789" required value="{{ draft.phone or '' }}" />
+</label>
+
+
+
+    <label>Grade
+      <select name="grade" required>
+        <option value="">Select</option>
+        {% set grades = ['SS1', 'SS2', 'SS3', 'Year 9', 'Year 10', 'Year 11', 'Year 12', 'IB1'] %}
+        {% for g in grades %}
+          <option value="{{ g }}" {% if draft and draft.grade == g %}selected{% endif %}>{{ g }}</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <label>Parent/Guardian Name
+      <input name="parent_name" required value="{{ draft.parent_name or '' }}">
+    </label>
+
+ <label>Parent/Guardian Contact
+  <input name="parent_contact" type="text" placeholder="+2348123456789" required value="{{ draft.parent_contact or '' }}" />
+</label>
+
+
+
+    <div class="step-buttons">
+      <button type="button" class="next-btn">Next</button>
+    </div>
+  </section>
+
+  <section class="form-step">
+    <h2>Academic Information</h2>
+
+    <label>School Name
+      <input name="school_name" required value="{{ draft.school_name or '' }}">
+    </label>
+
+    <label>School Address
+      <input name="school_location" required value="{{ draft.school_location or '' }}">
+    </label>
+
+  <label>School Contact
+  <input name="school_contact" type="text" placeholder="+2348123456789" required value="{{ draft.school_contact or '' }}" />
+</label>
+
+
+
+    <label>Teacher Name
+      <input name="teacher_name" required value="{{ draft.teacher_name or '' }}">
+    </label>
+
+<label>Teacher Contact
+  <input name="teacher_contact" type="text" placeholder="+2348123456789" required value="{{ draft.teacher_contact or '' }}" />
+</label>
+
+
+
+
+    <label>Teacher Email
+      <input type="email" name="teacher_email" required value="{{ draft.teacher_email or '' }}">
+    </label>
+
+    <label>Please List the subjects you took during the most recent school year
+      <input name="subjects" required value="{{ draft.subjects or '' }}">
+    </label>
+
+    <label>What are your academic interests or fields you'd like to explore?
+      <input name="interests" required value="{{ draft.interests or '' }}">
+    </label>
+
+    <label>Upload your most recent grade report (PDF or image)
+      <input type="file" name="grade_report" accept=".pdf,.jpg,.jpeg,.png">
+      <p style="font-size: 13px; color: gray; margin-top: 4px;">
+  This file will only be saved after you submit the full application. If you log out before submitting, you’ll need to upload it again.
+</p>
+
+    </label>
+
+    <div class="step-buttons">
+      <button type="button" class="prev-btn">Back</button>
+      <button type="button" class="next-btn">Next</button>
+    </div>
+  </section>
+
       <section class="form-step">
   <h2>Activities</h2>
   <div id="activities-container"></div>
@@ -80,12 +166,20 @@
   </div>
 </section>
 
+
       <section class="form-step">
         <h2>Essays</h2>
-        <label>Tell us about something scientific or technical you recently learned that excited you. What made it interesting to you? (max 150 words)<textarea name="essay1" required></textarea></label>
-        <label>PEAR hopes to bring people with diverse backgrounds together to collaborate, from tackling Africa’s biggest challenges to lending a helping hand. Describe one way you have collaborated with others to learn from them, with them, or contribute to your community together. (max 200 words)<textarea name="essay2" required></textarea></label>
-        <label>Why do you want to be part of the PEAR Summer Program? What are you hoping to learn or take away from it? (max 150 words)<textarea name="essay3" required></textarea></label>
-        <label>Optional Upload<input type="file" name="upload" /></label>
+        <label>Tell us about something scientific or technical you recently learned that excited you. What made it interesting to you? (max 150 words)<textarea name="essay1">{{ draft.essay1 or '' }}</textarea></label>
+        <label>PEAR hopes to bring people with diverse backgrounds together to collaborate, from tackling Africa’s biggest challenges to lending a helping hand. Describe one way you have collaborated with others to learn from them, with them, or contribute to your community together. (max 200 words)<textarea name="essay2">{{ draft.essay2 or '' }}</textarea>
+</label>
+        <label>Why do you want to be part of the PEAR Summer Program? What are you hoping to learn or take away from it? (max 150 words)<textarea name="essay3">{{ draft.essay3 or '' }}</textarea>
+</textarea></label>
+        <label>Optional Upload<input type="file" name="upload" />
+<p style="font-size: 13px; color: gray; margin-top: 4px;">
+  This file will only be saved after you submit the full application. If you log out before submitting, you’ll need to upload it again.
+</p>
+
+        </label>
         <label>Optional Info or Notes about Your Upload
   <input name="optional_info" placeholder="e.g. This file contains certificates..." />
 </label>
@@ -96,13 +190,35 @@
       </section><section class="form-step">
         <h2>Review Your Application</h2>
         <p>Please confirm your information below before submitting:</p>
-        <div id="review-content" style="white-space: pre-wrap; background: #f9f9f9; padding: 15px; border-radius: 10px; border: 1px solid #ccc;"></div>
+        <div id="review-content" class="review-summary-box"></div>
         <div class="step-buttons">
           <button type="button" class="prev-btn">Back</button>
           <button type="submit">Submit</button>
         </div>
-      </section></form>
+      </section>
+<div id="autosave-status" style="margin-top: 10px; font-size: 12px; color: gray;"></div>
+
+    </form>
   </main>
+
+{% if draft and draft.status == 'submitted' %}
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('input, textarea, select, button').forEach(el => {
+        el.disabled = true;
+      });
+    });
+  </script>
+  {% endif %}
+
+      
+<!-- Inject autosaved activities -->
+<script>
+  window.prefilledActivities = {{ activities | tojson | safe }};
+</script>
+<script src="/static/form.js" defer></script>
+</body>
+</html>
 
 
 </body>

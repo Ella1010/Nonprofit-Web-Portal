@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Register</title>
+</head>
+<body style="margin: 0; font-family: 'Segoe UI', sans-serif; background: #f0f4f8;">
+
+  <!-- Header -->
+  <div style="background: linear-gradient(to right, #003366, #004d66); color: white; padding: 30px 20px; text-align: center; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); border-bottom-left-radius: 28px; border-bottom-right-radius: 28px;">
+    <h1 style="margin: 0; font-size: 28px;">Register</h1>
+  </div>
+
+  <!-- Form Container -->
+  <main style="max-width: 500px; margin: 40px auto; background: #fff; padding: 30px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+    <form method="POST" onsubmit="return validateForm()">
+      {% if error %}
+        <p style="color: red;">{{ error }}</p>
+      {% endif %}
+
+      <label style="display: block; margin-bottom: 15px; font-weight: 500;">
+        Email:
+        <input type="email" name="email" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; margin-top: 5px;">
+      </label>
+
+      <label style="display: block; margin-bottom: 15px; font-weight: 500;">
+        Full Name:
+        <input type="text" name="student_name" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; margin-top: 5px;">
+      </label>
+
+      <label style="display: block; margin-bottom: 15px; font-weight: 500;">
+        Password:
+        <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+          <input type="password" id="password" name="password" required style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
+          <button type="button" onclick="toggleVisibility('password')" style="padding: 10px; background: #004d66; color: white; border: none; border-radius: 6px; cursor: pointer;">👁️</button>
+        </div>
+        <small id="strength-text" style="display: block; margin-top: 5px; font-size: 12px; color: gray;"></small>
+      </label>
+
+      <label style="display: block; margin-bottom: 20px; font-weight: 500;">
+        Confirm Password:
+        <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+          <input type="password" id="confirm-password" required style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
+          <button type="button" onclick="toggleVisibility('confirm-password')" style="padding: 10px; background: #004d66; color: white; border: none; border-radius: 6px; cursor: pointer;">👁️</button>
+        </div>
+        <small id="match-text" style="display: block; margin-top: 5px; font-size: 12px; color: gray;"></small>
+      </label>
+
+      <button type="submit" style="width: 100%; padding: 12px; background: #004d66; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px;">Register</button>
+
+      <p style="margin-top: 15px; text-align: center;">
+        Already registered? <a href="/login_user">Login here</a>
+      </p>
+    </form>
+  </main>
+
+  <!-- JavaScript -->
+  <script>
+    function toggleVisibility(id) {
+      const input = document.getElementById(id);
+      input.type = input.type === "password" ? "text" : "password";
+    }
+
+    document.getElementById('password').addEventListener('input', function () {
+      const val = this.value;
+      const strengthText = document.getElementById('strength-text');
+      let strength = 0;
+
+      if (val.length >= 8) strength++;
+      if (/[A-Z]/.test(val)) strength++;
+      if (/[0-9]/.test(val)) strength++;
+      if (/[^A-Za-z0-9]/.test(val)) strength++;
+
+      if (strength <= 1) {
+        strengthText.textContent = "Weak password";
+        strengthText.style.color = "red";
+      } else if (strength <= 3) {
+        strengthText.textContent = "Moderate password";
+        strengthText.style.color = "orange";
+      } else {
+        strengthText.textContent = "Strong password";
+        strengthText.style.color = "green";
+      }
+    });
+
+    document.getElementById('confirm-password').addEventListener('input', function () {
+      const password = document.getElementById('password').value;
+      const confirm = this.value;
+      const matchText = document.getElementById('match-text');
+
+      if (password !== confirm) {
+        matchText.textContent = "Passwords do not match";
+        matchText.style.color = "red";
+      } else {
+        matchText.textContent = "Passwords match";
+        matchText.style.color = "green";
+      }
+    });
+
+    function validateForm() {
+      const password = document.getElementById('password').value;
+      const confirm = document.getElementById('confirm-password').value;
+      if (password !== confirm) {
+        alert("Passwords do not match!");
+        return false;
+      }
+      return true;
+    }
+  </script>
+
+</body>
+</html>
+
+
+
+
+
+
+
+

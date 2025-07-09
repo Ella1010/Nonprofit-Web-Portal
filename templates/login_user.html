@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head><title>Login</title><link rel="stylesheet" href="/static/styles.css"></head>
+<body>
+  <div class="form-container">
+    <h2>Login to PEAR Portal</h2>
+    {% if error %}<p style="color:red;">{{ error }}</p>{% endif %}
+    <form method="POST">
+      <label>Email:<input type="email" name="email" required></label>
+      <label>Password:<input type="password" name="password" required></label>
+      <button type="submit">Login</button>
+    </form>
+    <p>Don’t have an account? <a href="/register">Register here</a>.</p>
+  </div>
+</body>
+</html>

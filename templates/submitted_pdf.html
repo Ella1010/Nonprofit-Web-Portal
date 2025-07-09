@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      font-family: "Helvetica", sans-serif;
+      font-size: 14px;
+    }
+
+    h2 {
+      color: #003366;
+      margin-bottom: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    td, th {
+      border: 1px solid #ccc;
+      padding: 8px;
+      vertical-align: top;
+    }
+
+    th {
+      background-color: #f0f0f0;
+      text-align: left;
+    }
+
+    .section {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h2>PEAR Application Summary</h2>
+
+  <div class="section">
+    <h3>Basic Information</h3>
+    <table>
+      <tr><th>Student Name</th><td>{{ app.student_name }}</td></tr>
+      <tr><th>Gender</th><td>{{ app.student_gender }}</td></tr>
+      <tr><th>Date of Birth</th><td>{{ app.dob }}</td></tr>
+      <tr><th>Email</th><td>{{ app.email }}</td></tr>
+      <tr><th>Phone</th><td>{{ app.phone }}</td></tr>
+      <tr><th>Grade</th><td>{{ app.grade }}</td></tr>
+      <tr><th>Parent Name</th><td>{{ app.parent_name }}</td></tr>
+      <tr><th>Parent Contact</th><td>{{ app.parent_contact }}</td></tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <h3>Academic Information</h3>
+    <table>
+      <tr><th>School Name</th><td>{{ app.school_name }}</td></tr>
+      <tr><th>School Location</th><td>{{ app.school_location }}</td></tr>
+      <tr><th>School Contact</th><td>{{ app.school_contact }}</td></tr>
+      <tr><th>Teacher Name</th><td>{{ app.teacher_name }}</td></tr>
+      <tr><th>Teacher Contact</th><td>{{ app.teacher_contact }}</td></tr>
+      <tr><th>Teacher Email</th><td>{{ app.teacher_email }}</td></tr>
+      <tr><th>Subjects</th><td>{{ app.subjects }}</td></tr>
+      <tr><th>Academic Interests</th><td>{{ app.interests }}</td></tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <h3>Essays</h3>
+    <table>
+      <tr><th>Essay 1</th><td>{{ app.essay1 }}</td></tr>
+      <tr><th>Essay 2</th><td>{{ app.essay2 }}</td></tr>
+      <tr><th>Essay 3</th><td>{{ app.essay3 }}</td></tr>
+    </table>
+  </div>
+
+  {% if app.optional_info %}
+  <div class="section">
+    <h3>Upload Notes</h3>
+    <table>
+      <tr><th>Optional Info</th><td>{{ app.optional_info }}</td></tr>
+    </table>
+  </div>
+  {% endif %}
+
+{% if activities %}
+<h3>Activities</h3>
+<ul>
+  {% for a in activities %}
+    <li>
+      <strong>{{ a.activity_type }}</strong> — {{ a.activity_position }} at {{ a.activity_org }}<br>
+      <em>{{ a.activity_desc }}</em>
+    </li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+      
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PEAR Dashboard</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f4f6fb;
+      margin: 0;
+      padding: 40px;
+    }
+
+    .dashboard-container {
+      max-width: 700px;
+      margin: auto;
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.07);
+    }
+
+    .dashboard-header h2 {
+      margin: 0 0 10px;
+      color: #003366;
+    }
+
+    .status-info {
+      margin-bottom: 20px;
+      padding: 20px;
+      background: #e7f5ff;
+      border-left: 5px solid #0077cc;
+      border-radius: 12px;
+    }
+
+    .progress {
+      margin: 25px 0;
+    }
+
+    .progress h3 {
+      margin-bottom: 12px;
+      color: #004d66;
+    }
+
+    .progress-list {
+      list-style: none;
+      padding: 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 10px;
+    }
+
+    .progress-list li {
+      background: #e0ecf5;
+      padding: 10px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .progress-list li.complete {
+      background: #c6f1d6;
+      font-weight: bold;
+      color: #0a4b3f;
+    }
+
+    .dashboard-actions {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+
+    .dashboard-actions a, .dashboard-actions button {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .resume-btn { background: #0077cc; color: white; }
+    .pdf-btn { background: #4caf50; color: white; }
+    .reset-btn { background: #e53935; color: white; }
+    .view-btn { background: #6c63ff; color: white; }
+  </style>
+</head>
+<body>
+
+<div class="dashboard-container">
+  <div class="dashboard-header">
+    <h2>🎉 Welcome, {{ session.student_name }}!</h2>
+  </div>
+
+<form action="/logout_user" method="GET" style="margin: 0;">
+  <button type="submit" style="padding: 6px 12px; background: white; color: #004d66; border: none; border-radius: 6px; font-weight: 500; cursor: pointer;">
+    Logout
+  </button>
+</form>
+
+  {% if application %}
+    <div class="status-info">
+      {% if application.status == 'submitted' %}
+        ✅ Your application was submitted.
+        <br><br>
+        You can view it but can no longer make edits.
+      {% else %}
+        📝 Your draft is saved.
+        <br><br>
+        You can resume your application or start over.
+      {% endif %}
+    </div>
+
+    <div class="progress">
+      <h3>Progress</h3>
+      <ul class="progress-list">
+        <li class="{{ 'complete' if application.student_name else '' }}">Basic Info</li>
+        <li class="{{ 'complete' if application.school_name else '' }}">Academic</li>
+        <li class="{{ 'complete' if application.subjects else '' }}">Activities</li>
+        <li class="{{ 'complete' if application.essay1 else '' }}">Essays</li>
+        <li class="{{ 'complete' if application.status == 'submitted' else '' }}">Review</li>
+      </ul>
+    </div>
+
+    <div class="dashboard-actions">
+      {% if application.status == 'submitted' %}
+<a href="{{ url_for('download_user_pdf', app_id=application.id) }}" class="view-btn">📄 View Submitted Application</a>
+      {% else %}
+        <a href="{{ url_for('index') }}" class="resume-btn">▶️ Resume Application</a>
+        <a href="{{ url_for('download_response_pdf', app_id=application.id) }}" class="pdf-btn">📥 Download Draft</a>
+
+      {% endif %}
+    </div>
+
+  {% else %}
+    <div class="status-info">
+      👋 You haven't started your application yet.
+    </div>
+    <div class="dashboard-actions">
+      <a href="{{ url_for('index') }}" class="resume-btn">🚀 Start Application</a>
+    </div>
+  {% endif %}
+</div>
+
+<script>
+  window.prefilledActivities = {{ activities | tojson }};
+</script>
+
+
+
+</body>
+</html>

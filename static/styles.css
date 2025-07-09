@@ -100,6 +100,30 @@ button:hover {
   display: block;
   animation: fadeIn 0.4s ease-in-out;
 }
+
+.review-summary-box {
+  padding: 20px;
+  background-color: #fdfdfd;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 15px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.review-summary-box strong {
+  display: inline-block;
+  width: 180px;
+  font-weight: 600;
+  color: #2a2a2a;
+}
+
+.highlight-missing {
+  border: 2px solid red !important;
+  background-color: #ffecec;
+}
+
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }

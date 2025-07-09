@@ -8,11 +8,89 @@ from dotenv import load_dotenv
 from reportlab.platypus import Paragraph
 from flask_mail import Mail, Message
 from collections import defaultdict
+from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
+from flask import flash
+from flask import send_file
 
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY") or "supersecret"
+
+
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            flash("Please log in to continue.")
+            return redirect(url_for('login_user'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+# --- USERS TABLE CREATION (run once in your DB) ---
+"""
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    student_name TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+"""
+
+
+
+# fetches user's existing application
+def get_application_by_user(user_id):
+    conn = get_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    cursor.execute("SELECT * FROM applications WHERE user_id = %s", (user_id,))
+    application = cursor.fetchone()
+    conn.close()
+    return application
+
+# --- REGISTRATION ROUTE ---
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        email = clean_input(request.form.get('email'))
+        password = request.form.get('password')
+        student_name = clean_input(request.form.get('student_name'))
+
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+        existing = cursor.fetchone()
+
+        if existing:
+            conn.close()
+            return render_template("register.html", error="An account with this email already exists.")
+
+        hash_pw = generate_password_hash(password)
+        cursor.execute("INSERT INTO users (email, password_hash, student_name) VALUES (%s, %s, %s)", (email, hash_pw, student_name))
+        conn.commit()
+        conn.close()
+
+        return redirect(url_for('login_user'))
+
+    return render_template("register.html")
+
+
+# --- APPLICANT LOGIN ROUTE ---
+
+
+
+# --- LOGOUT FOR USERS ---
+@app.route('/logout_user')
+def logout_user():
+    session.pop('user_id', None)
+    session.pop('email', None)
+    session.pop('student_name', None)
+    return redirect(url_for('login_user'))
+
+
 
 
 
@@ -49,14 +127,14 @@ def insert_application(data, grade_report_path=None, optional_upload_path=None, 
 
     cursor.execute("""
     INSERT INTO applications (
-        student_name, student_gender, student_gender_other, dob, email, phone, grade,
+        student_name, student_gender, dob, email, phone, grade,
         parent_name, parent_contact, school_name, school_location, school_contact,
         teacher_name, teacher_contact, teacher_email, subjects, interests,
         accommodation_required, accommodation_comment,
         essay1, essay2, essay3, optional_info,
         grade_report_path, upload_path
     ) VALUES (
-        %(student_name)s, %(student_gender)s, %(student_gender_other)s, %(dob)s, %(email)s, %(phone)s, %(grade)s,
+        %(student_name)s, %(student_gender)s, %(dob)s, %(email)s, %(phone)s, %(grade)s,
         %(parent_name)s, %(parent_contact)s, %(school_name)s, %(school_location)s, %(school_contact)s,
         %(teacher_name)s, %(teacher_contact)s, %(teacher_email)s, %(subjects)s, %(interests)s,
         %(accommodation_required)s, %(accommodation_comment)s,
@@ -96,30 +174,51 @@ def insert_application(data, grade_report_path=None, optional_upload_path=None, 
     conn.commit()
     conn.close()
 
+
 @app.route('/')
+@login_required
 def index():
-    return render_template('multistep_form.html')
+    conn = get_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+    cursor.execute("SELECT * FROM applications WHERE user_id = %s ORDER BY id DESC LIMIT 1", (session["user_id"],))
+    application = cursor.fetchone()
+
+    activities = []
+    if application:
+        cursor.execute("""
+            SELECT activity_type, activity_position, activity_org, activity_desc
+            FROM activities WHERE application_id = %s
+        """, (application['id'],))
+        activities = cursor.fetchall()
+
+    conn.close()
+
+    if application and application.get("status") == "submitted":
+        return redirect(url_for("dashboard"))
+
+    return render_template('multistep_form.html', draft=application, activities=activities)
+
+
 
 @app.route('/submit', methods=['POST'])
+@login_required
 def submit():
-    activity_types = request.form.getlist('activity_type[]')
-    activity_positions = request.form.getlist('activity_position[]')
-    activity_orgs = request.form.getlist('activity_org[]')
-    activity_descs = request.form.getlist('activity_desc[]')
-    activities = {
-    'types': [clean_input(x) for x in activity_types],
-    'positions': [clean_input(x) for x in activity_positions],
-    'orgs': [clean_input(x) for x in activity_orgs],
-    'descs': [clean_input(x) for x in activity_descs]
-    }
+    conn = get_connection()
+    cursor = conn.cursor()
+    user_id = session["user_id"]
 
-    fields = ["student_name", "student_gender", "student_gender_other", "dob", "email", "phone", "grade",
-              "parent_name", "parent_contact", "school_name", "school_location", "school_contact",
-              "teacher_name", "teacher_contact", "teacher_email", "subjects", "interests",
-              "accommodation_required", "accommodation_comment", "essay1", "essay2", "essay3", "optional_info"]
+    # Fetch latest application
+    cursor.execute("SELECT * FROM applications WHERE user_id = %s ORDER BY id DESC LIMIT 1", (user_id,))
+    app_row = cursor.fetchone()
 
-    data = {f: clean_input(request.form.get(f, '')) for f in fields}
+    if not app_row:
+        conn.close()
+        return redirect(url_for("index"))
 
+    app_id = app_row[0]
+
+    # Handle file uploads
     os.makedirs('static/uploads', exist_ok=True)
 
     grade_file = request.files.get('grade_report')
@@ -134,49 +233,347 @@ def submit():
         optional_path = f"static/uploads/{optional_file.filename}"
         optional_file.save(optional_path)
 
-    insert_application(data, grade_path, optional_path, activities)
+    # Dynamic activities
+    activity_types = request.form.getlist('activity_type[]')
+    activity_positions = request.form.getlist('activity_position[]')
+    activity_orgs = request.form.getlist('activity_org[]')
+    activity_descs = request.form.getlist('activity_desc[]')
 
-    user_email = clean_input(data["email"])
-    student_name = clean_input(data["student_name"])
+    # Insert activities
+    cursor.execute("DELETE FROM activities WHERE application_id = %s", (app_id,))
+    for i in range(len(activity_types)):
+        if activity_types[i].strip():
+            cursor.execute("""
+                INSERT INTO activities (application_id, activity_type, activity_position, activity_org, activity_desc)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (app_id, activity_types[i], activity_positions[i], activity_orgs[i], activity_descs[i]))
+
+    # Update application
+    cursor.execute("""
+        UPDATE applications SET
+            student_name = %s,
+            student_gender = %s,
+            dob = %s,
+            email = %s,
+            phone = %s,
+            grade = %s,
+            parent_name = %s,
+            parent_contact = %s,
+            school_name = %s,
+            school_location = %s,
+            school_contact = %s,
+            teacher_name = %s,
+            teacher_contact = %s,
+            teacher_email = %s,
+            subjects = %s,
+            interests = %s,
+            accommodation_required = %s,
+            accommodation_comment = %s,
+            essay1 = %s,
+            essay2 = %s,
+            essay3 = %s,
+            optional_info = %s,
+            grade_report_path = %s,
+            upload_path = %s,
+            status = 'submitted'
+        WHERE id = %s
+    """, (
+        request.form.get("student_name"),
+        request.form.get("student_gender"),
+        request.form.get("dob"),
+        request.form.get("email"),
+        request.form.get("phone"),
+        request.form.get("grade"),
+        request.form.get("parent_name"),
+        request.form.get("parent_contact"),
+        request.form.get("school_name"),
+        request.form.get("school_location"),
+        request.form.get("school_contact"),
+        request.form.get("teacher_name"),
+        request.form.get("teacher_contact"),
+        request.form.get("teacher_email"),
+        request.form.get("subjects"),
+        request.form.get("interests"),
+        request.form.get("accommodation_required"),
+        request.form.get("accommodation_comment"),
+        request.form.get("essay1"),
+        request.form.get("essay2"),
+        request.form.get("essay3"),
+        request.form.get("optional_info"),
+        grade_path,
+        optional_path,
+        app_id
+    ))
+
+    conn.commit()
+    conn.close()
+
+    # Send confirmation email
+    student_name = request.form.get("student_name")
+    user_email = request.form.get("email")
     session["email"] = user_email
     session["student_name"] = student_name
 
     try:
         msg = Message(
-        subject="PEAR Application Received!",
-        sender=app.config["MAIL_USERNAME"],
-        recipients=[user_email],
-        bcc=["admin@pearafrica.org"]
-
+            subject="PEAR Application Received!",
+            sender=app.config["MAIL_USERNAME"],
+            recipients=[user_email],
+            bcc=["admin@pearafrica.org"]
         )
         msg.body = f"""Dear {student_name},
 
-    Thank you for applying to the PEAR Summer Program!.
+Thank you for applying to the PEAR Summer Program!
 
-    Your application has been received. We’ll be in touch once the review process is complete.
+Your application has been received. We’ll be in touch once the review process is complete.
 
-    Best,
-    The PEAR Team"""
-        # HTML version
+Best,
+The PEAR Team"""
+
         msg.html = f"""
-    <p>Dear {student_name},</p>
-    <p>Thank you for applying to the <strong>PEAR Summer Program!</strong>.</p>
-    <p>This email confirms that your application has been received. We’ll be in touch once the review process is complete.</p>
-    <p>Best regards,<br>The PEAR Team</p>
-    """
+        <p>Dear {student_name},</p>
+        <p>Thank you for applying to the <strong>PEAR Summer Program!</strong>.</p>
+        <p>This email confirms that your application has been received. We’ll be in touch once the review process is complete.</p>
+        <p>Best regards,<br>The PEAR Team</p>
+        """
 
         mail.send(msg)
 
     except Exception as e:
         print("Email failed to send:", e)
 
+    return redirect(url_for("dashboard"))
 
-    return redirect(url_for('confirmation'))
+
+
+
+
+
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    conn = get_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+    # Get latest application
+    cursor.execute("SELECT * FROM applications WHERE user_id = %s ORDER BY id DESC LIMIT 1", (session['user_id'],))
+    application = cursor.fetchone()
+
+    # Fetch related activities
+    activities = []
+    if application:
+        cursor.execute("""
+            SELECT activity_type, activity_position, activity_org, activity_desc
+            FROM activities WHERE application_id = %s
+        """, (application['id'],))
+        activities = cursor.fetchall()
+
+    conn.close()
+
+    # Send both application and activities to the template
+    return render_template('dashboard.html', application=application, activities=activities)
+
+
+@app.route('/download_user_pdf/<int:app_id>')
+@login_required
+def download_user_pdf(app_id):
+    conn = get_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+    # Fetch application
+    cursor.execute("SELECT * FROM applications WHERE id = %s AND user_id = %s", (app_id, session["user_id"]))
+    app_data = cursor.fetchone()
+
+    if not app_data:
+        conn.close()
+        return "Application not found.", 404
+
+    # Fetch related activities
+    cursor.execute("SELECT * FROM activities WHERE application_id = %s", (app_id,))
+    activities = cursor.fetchall()
+
+    conn.close()
+
+    # Render PDF with activities injected
+    rendered = render_template("submitted_pdf.html", app=app_data, activities=activities)
+    pdf = BytesIO()
+    pisa_status = pisa.CreatePDF(rendered, dest=pdf)
+
+    if pisa_status.err:
+        return "PDF generation error", 500
+
+    pdf.seek(0)
+    return send_file(pdf, mimetype='application/pdf', as_attachment=True,
+                     download_name='PEAR_Submitted_Application.pdf')
+
+
+
+
+@app.route('/autosave', methods=['POST'])
+def autosave():
+    if not session.get("user_id"):
+        return {"error": "Not logged in"}, 401
+
+    user_id = session["user_id"]
+
+    fields = [
+        "student_name", "student_gender", "dob", "email", "phone", "grade",
+        "parent_name", "parent_contact", "school_name", "school_location", "school_contact",
+        "teacher_name", "teacher_contact", "teacher_email", "subjects", "interests",
+        "accommodation_required", "accommodation_comment",
+        "essay1", "essay2", "essay3", "optional_info"
+    ]
+
+    data = {f: clean_input(request.form.get(f, '')) for f in fields}
+
+    # Get activity fields
+    activity_types = request.form.getlist('activity_type[]')
+    activity_positions = request.form.getlist('activity_position[]')
+    activity_orgs = request.form.getlist('activity_org[]')
+    activity_descs = request.form.getlist('activity_desc[]')
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT id, status FROM applications WHERE user_id = %s ORDER BY id DESC LIMIT 1", (user_id,))
+    existing = cursor.fetchone()
+
+    if existing:
+        app_id, status = existing
+        if status == "submitted":
+            conn.close()
+            return {"error": "Application already submitted"}, 403
+
+        # Update application
+        update_fields = ", ".join([f"{k} = %s" for k in data.keys()])
+        cursor.execute(f"""
+            UPDATE applications SET {update_fields}
+            WHERE id = %s
+        """, list(data.values()) + [app_id])
+
+        # Overwrite activities
+        cursor.execute("DELETE FROM activities WHERE application_id = %s", (app_id,))
+        for i in range(len(activity_types)):
+            if activity_types[i].strip():
+                cursor.execute("""
+                    INSERT INTO activities (application_id, activity_type, activity_position, activity_org, activity_desc)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, (
+                    app_id,
+                    clean_input(activity_types[i]),
+                    clean_input(activity_positions[i]),
+                    clean_input(activity_orgs[i]),
+                    clean_input(activity_descs[i])
+                ))
+
+    else:
+        # New draft
+        fields_str = ", ".join(data.keys())
+        placeholders = ", ".join(["%s"] * len(data))
+        cursor.execute(f"""
+            INSERT INTO applications (user_id, status, {fields_str})
+            VALUES (%s, 'incomplete', {placeholders})
+            RETURNING id
+        """, [user_id] + list(data.values()))
+
+        app_id = cursor.fetchone()[0]
+
+        # Insert new activities
+        for i in range(len(activity_types)):
+            if activity_types[i].strip():
+                cursor.execute("""
+                    INSERT INTO activities (application_id, activity_type, activity_position, activity_org, activity_desc)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, (
+                    app_id,
+                    clean_input(activity_types[i]),
+                    clean_input(activity_positions[i]),
+                    clean_input(activity_orgs[i]),
+                    clean_input(activity_descs[i])
+                ))
+
+    conn.commit()
+    conn.close()
+    return {"success": True}
+
+
+
+
+
+# @app.route('/autosave', methods=['POST'])
+# def autosave():
+#     if not session.get("user_id"):
+#         return {"error": "Not logged in"}, 401
+
+#     user_id = session["user_id"]
+
+#     fields = [
+#         "student_name", "student_gender", "student_gender_other", "dob", "email", "phone", "grade",
+#         "parent_name", "parent_contact", "school_name", "school_location", "school_contact",
+#         "teacher_name", "teacher_contact", "teacher_email", "subjects", "interests",
+#         "accommodation_required", "accommodation_comment",
+#         "essay1", "essay2", "essay3", "optional_info"
+#     ]
+
+#     data = {f: clean_input(request.form.get(f, '')) for f in fields}
+
+#     conn = get_connection()
+#     cursor = conn.cursor()
+
+#     cursor.execute("SELECT id, status FROM applications WHERE user_id = %s ORDER BY id DESC LIMIT 1", (user_id,))
+#     existing = cursor.fetchone()
+
+#     if existing:
+#         app_id, status = existing
+#         if status == "submitted":
+#             conn.close()
+#             return {"error": "Application already submitted"}, 403
+
+#         update_fields = ", ".join([f"{k} = %s" for k in data.keys()])
+#         cursor.execute(f"""
+#             UPDATE applications SET {update_fields}
+#             WHERE id = %s
+#         """, list(data.values()) + [app_id])
+#     else:
+#         fields_str = ", ".join(data.keys())
+#         placeholders = ", ".join(["%s"] * len(data))
+#         cursor.execute(f"""
+#             INSERT INTO applications (user_id, status, {fields_str})
+#             VALUES (%s, 'incomplete', {placeholders})
+#         """, [user_id] + list(data.values()))
+
+#     conn.commit()
+#     conn.close()
+#     return {"success": True}
+
+
 
 
 @app.route('/confirmation')
 def confirmation():
     return render_template('confirmation.html')
+
+
+
+
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+
+        if (
+            (email == os.getenv("ADMIN_EMAIL_1") and password == os.getenv("ADMIN_PASS_1"))
+        ):
+            session["admin"] = True
+            return redirect(url_for('admin'))
+        else:
+            return render_template("login.html", error="Invalid credentials.")
+
+    return render_template("login.html")
+
 
 @app.route('/admin')
 def admin():
@@ -227,26 +624,45 @@ def download_response_pdf(app_id):
     response.headers['Content-Disposition'] = f'attachment; filename=application_{app_id}.pdf'
     return response
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
+@app.route('/login_user', methods=['GET', 'POST'])
+def login_user():
     if request.method == 'POST':
-        email = request.form.get('email')
+        email = clean_input(request.form.get('email'))
         password = request.form.get('password')
 
-        if (
-            (email == os.getenv("ADMIN_EMAIL_1") and password == os.getenv("ADMIN_PASS_1"))
-        ):
-            session["admin"] = True
-            return redirect(url_for('admin'))
-        else:
-            return render_template("login.html", error="Invalid credentials.")
+        conn = get_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+        user = cursor.fetchone()
+        conn.close()
 
-    return render_template("login.html")
+        if user and check_password_hash(user['password_hash'], password):
+            session['user_id'] = user['id']
+            session['email'] = user['email']
+            session['student_name'] = user['student_name']
+            return redirect(url_for('dashboard'))  # ✅ Go to dashboard
+
+        else:
+            return render_template("login_user.html", error="Invalid email or password.")
+
+    return render_template("login_user.html")
+
 
 @app.route('/logout')
 def logout():
     session.clear()  # clears all session data
     return redirect(url_for('login'))
+
+@app.route('/logout_user_dashboard')
+def logout_user_dashboard():
+    session.clear()
+    return redirect(url_for('login_user'))  # 👈 Redirect to login page after logout
+
+
+
+@app.route('/')
+def home_redirect():
+    return redirect(url_for('dashboard'))
 
 
 if __name__ == "__main__":
