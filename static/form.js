@@ -276,26 +276,77 @@ if (window.prefilledActivities && window.prefilledActivities.length) {
 
 document.getElementById('application-form').addEventListener('submit', function (e) {
 
-   let formValid = true;
+  // ✅ Validate required fields and highlight them
+  let formValid = true;
+  const missingFields = [];
+  let firstInvalidField = null;
 
-  // Clear old highlights
+  // Remove old highlights
   document.querySelectorAll('.highlight-missing').forEach(el => {
     el.classList.remove('highlight-missing');
   });
 
-  // Check all required fields
-  document.querySelectorAll('#application-form [required]').forEach(input => {
-    if (!input.value || input.value.trim() === '') {
+  // Check all required inputs
+  document.querySelectorAll('#application-form input[required], textarea[required], select[required]').forEach(input => {
+    const value = input.value?.trim();
+    if (!value) {
       formValid = false;
       input.classList.add('highlight-missing');
+
+      if (!firstInvalidField) firstInvalidField = input;
+
+      const label = input.closest('label')?.innerText?.split('\n')[0]?.trim() || input.name;
+      missingFields.push(label);
     }
   });
 
+  // Stop form if fields are missing
   if (!formValid) {
     e.preventDefault();
-    alert('Please complete all required fields highlighted in red.');
+    if (firstInvalidField) {
+      firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      firstInvalidField.focus();
+    }
+    alert("Please complete the following required fields:\n• " + missingFields.join("\n• "));
     return;
   }
+
+  // 🔽 Your other validations (email domain, word count, etc.) go below here
+
+
+
+
+// === Enhanced Email Domain Validation ===
+const emailField = document.querySelector('input[name="email"]');
+const email = emailField?.value.trim().toLowerCase();
+
+if (email) {
+  const domain = email.split('@')[1];
+
+  const publicDomains = [
+    'gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'icloud.com',
+    'aol.com', 'live.com', 'msn.com', 'me.com', 'protonmail.com',
+    'pearafrica.org'  // ✅ Add your program domain
+  ];
+
+  const validSuffixes = [
+    '.edu', '.ac.uk', '.ac.ng', '.edu.ng', '.org', '.school', '.college'
+  ];
+
+  const isValidDomain =
+    publicDomains.includes(domain) ||
+    validSuffixes.some(suffix => domain.endsWith(suffix));
+
+  if (!isValidDomain) {
+    alert("Please use a valid email address from a known provider or educational institution (e.g., gmail.com, .edu.ng, .ac.uk)");
+    emailField.classList.add('highlight-missing');
+    emailField.focus();
+    e.preventDefault();
+    return;
+  }
+}
+
+
 
   const gradeReportInput = document.querySelector('input[name="grade_report"]');
 if (!gradeReportInput.files || gradeReportInput.files.length === 0) {
@@ -347,15 +398,6 @@ if (!gradeReportInput.files || gradeReportInput.files.length === 0) {
       }
     });
 
-  // SCROLL TO FIRST INVALID FIELD
-  const firstInvalid = this.querySelector(':invalid');
-  if (firstInvalid) {
-    firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    firstInvalid.focus();
-    e.preventDefault();  // prevent submission
-    alert("Please fill out all required fields.");
-    return;
-  }
 
     if (tooLong) {
       e.preventDefault();
@@ -369,6 +411,8 @@ setTimeout(() => {
     el.addEventListener('input', () => {
       clearTimeout(autosaveTimeout);
       autosaveTimeout = setTimeout(autosaveFormData, 2000);
+      el.classList.remove('highlight-missing'); // 👈 Also remove red
+
     });
     console.log("Autosave attached to:", el.name); // optional debug
   });

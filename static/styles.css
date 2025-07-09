@@ -118,9 +118,11 @@ button:hover {
   color: #2a2a2a;
 }
 
+
+
 .highlight-missing {
   border: 2px solid red !important;
-  background-color: #ffecec;
+  background-color: #ffecec !important;
 }
 
 

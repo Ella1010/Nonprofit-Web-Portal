@@ -12,6 +12,11 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from flask import flash
 from flask import send_file
+import secrets
+from datetime import datetime, timedelta
+from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
+from dotenv import load_dotenv
+
 
 load_dotenv()
 
@@ -100,6 +105,8 @@ app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = os.getenv("MAIL_USERNAME")
 app.config['MAIL_PASSWORD'] = os.getenv("MAIL_PASSWORD")
+app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_USERNAME")
+
 mail = Mail(app)
 
 DB_CONFIG = {
@@ -204,7 +211,7 @@ def index():
 @app.route('/submit', methods=['POST'])
 @login_required
 def submit():
-    print("🚀 SUBMIT route triggered") #DEBUG
+
     conn = get_connection()
     cursor = conn.cursor()
     user_id = session["user_id"]
@@ -214,11 +221,11 @@ def submit():
     app_row = cursor.fetchone()
 
     if not app_row:
-        print("❌ No draft found for user") #DEBUG
+
         conn.close()
         return redirect(url_for("index"))
 
-    print(f"📦 Found draft with ID: {app_row[0]}") #DEBUG
+
     app_id = app_row[0]
 
     # Handle file uploads
@@ -227,14 +234,14 @@ def submit():
     grade_file = request.files.get('grade_report')
     grade_path = None
     if grade_file and grade_file.filename:
-        print(f"📁 Grade report uploaded: {grade_file.filename}") #DEBUG
+
         grade_path = f"static/uploads/{grade_file.filename}"
         grade_file.save(grade_path)
 
     optional_file = request.files.get('upload')
     optional_path = None
     if optional_file and optional_file.filename:
-        print(f"📁 Optional upload uploaded: {optional_file.filename}") #debug
+
         optional_path = f"static/uploads/{optional_file.filename}"
         optional_file.save(optional_path)
 
@@ -419,14 +426,12 @@ def download_user_pdf(app_id):
 @app.route('/autosave', methods=['POST'])
 def autosave():
 
-    #DEBUG
-    print("📩 AUTOSAVE triggered")
 
 
 
 
     if not session.get("user_id"):
-        print("❌ Autosave failed — user not logged in") #DEBUG LINE
+
         return {"error": "Not logged in"}, 401
 
     user_id = session["user_id"]
@@ -454,14 +459,6 @@ def autosave():
     existing = cursor.fetchone()
 
 
-    # DEBUG
-    if existing:
-        app_id, status = existing
-        print(f"📝 Existing draft found (ID: {app_id}, Status: {status})")
-    else:
-        print("🆕 Creating new draft application")
-
-    #DEBUG
 
     if existing:
         app_id, status = existing
@@ -684,6 +681,69 @@ def logout_user_dashboard():
     session.clear()
     return redirect(url_for('login_user'))  # 👈 Redirect to login page after logout
 
+
+# Token Serializer
+serializer = URLSafeTimedSerializer(app.secret_key)
+
+# DB connection
+def get_db_connection():
+    return psycopg2.connect(
+        dbname=os.getenv("DB_NAME"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD"),
+        host=os.getenv("DB_HOST"),
+        cursor_factory=psycopg2.extras.RealDictCursor
+    )
+
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form['email']
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM users WHERE email = %s", (email,))
+        user = cur.fetchone()
+        cur.close()
+        conn.close()
+
+        if user:
+            token = serializer.dumps(email, salt='password-reset')
+            link = url_for('reset_password', token=token, _external=True)
+
+            msg = Message( subject="Reset your password", recipients=[email],  sender=app.config["MAIL_USERNAME"])
+
+
+            msg.body = f"Click here to reset your password: {link}"
+            mail.send(msg)
+            flash("Reset link sent to your email.", "info")
+        else:
+            flash("Email not found.", "error")
+    return render_template('forgot_password.html')
+
+@app.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    try:
+        email = serializer.loads(token, salt='password-reset', max_age=3600)
+    except SignatureExpired:
+        return render_template('reset_password.html', error='Token has expired.')
+    except BadSignature:
+        return render_template('reset_password.html', error='Invalid or tampered token.')
+
+    if request.method == 'POST':
+        new_password = request.form['password']
+        hashed = generate_password_hash(new_password)
+
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("UPDATE users SET password_hash = %s WHERE email = %s", (hashed, email))
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        flash("Your password has been reset! Please log in.", "success")
+        return redirect(url_for('login_user'))
+
+    return render_template('reset_password.html', email=email)
 
 
 

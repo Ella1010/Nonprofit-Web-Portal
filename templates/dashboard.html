@@ -89,15 +89,27 @@
 <body>
 
 <div class="dashboard-container">
+<div style="text-align: right; margin-bottom: 20px;">
+  <form action="/logout_user" method="GET" style="display: inline;">
+    <button type="submit" style="
+      padding: 6px 12px;
+      background: #7064fc;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: 500;
+      cursor: pointer;
+    ">
+      Logout
+    </button>
+  </form>
+</div>
+
   <div class="dashboard-header">
     <h2>🎉 Welcome, {{ session.student_name }}!</h2>
   </div>
 
-<form action="/logout_user" method="GET" style="margin: 0;">
-  <button type="submit" style="padding: 6px 12px; background: white; color: #004d66; border: none; border-radius: 6px; font-weight: 500; cursor: pointer;">
-    Logout
-  </button>
-</form>
+
 
   {% if application %}
     <div class="status-info">
