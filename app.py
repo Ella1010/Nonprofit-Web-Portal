@@ -204,6 +204,7 @@ def index():
 @app.route('/submit', methods=['POST'])
 @login_required
 def submit():
+    print("🚀 SUBMIT route triggered") #DEBUG
     conn = get_connection()
     cursor = conn.cursor()
     user_id = session["user_id"]
@@ -213,9 +214,11 @@ def submit():
     app_row = cursor.fetchone()
 
     if not app_row:
+        print("❌ No draft found for user") #DEBUG
         conn.close()
         return redirect(url_for("index"))
 
+    print(f"📦 Found draft with ID: {app_row[0]}") #DEBUG
     app_id = app_row[0]
 
     # Handle file uploads
@@ -224,12 +227,14 @@ def submit():
     grade_file = request.files.get('grade_report')
     grade_path = None
     if grade_file and grade_file.filename:
+        print(f"📁 Grade report uploaded: {grade_file.filename}") #DEBUG
         grade_path = f"static/uploads/{grade_file.filename}"
         grade_file.save(grade_path)
 
     optional_file = request.files.get('upload')
     optional_path = None
     if optional_file and optional_file.filename:
+        print(f"📁 Optional upload uploaded: {optional_file.filename}") #debug
         optional_path = f"static/uploads/{optional_file.filename}"
         optional_file.save(optional_path)
 
@@ -338,10 +343,12 @@ The PEAR Team"""
         """
 
         mail.send(msg)
+        print("📤 Sending confirmation email to", user_email)
 
     except Exception as e:
         print("Email failed to send:", e)
 
+    print("✅ Submission complete, redirecting to dashboard")
     return redirect(url_for("dashboard"))
 
 
@@ -411,7 +418,15 @@ def download_user_pdf(app_id):
 
 @app.route('/autosave', methods=['POST'])
 def autosave():
+
+    #DEBUG
+    print("📩 AUTOSAVE triggered")
+
+
+
+
     if not session.get("user_id"):
+        print("❌ Autosave failed — user not logged in") #DEBUG LINE
         return {"error": "Not logged in"}, 401
 
     user_id = session["user_id"]
@@ -437,6 +452,16 @@ def autosave():
 
     cursor.execute("SELECT id, status FROM applications WHERE user_id = %s ORDER BY id DESC LIMIT 1", (user_id,))
     existing = cursor.fetchone()
+
+
+    # DEBUG
+    if existing:
+        app_id, status = existing
+        print(f"📝 Existing draft found (ID: {app_id}, Status: {status})")
+    else:
+        print("🆕 Creating new draft application")
+
+    #DEBUG
 
     if existing:
         app_id, status = existing
@@ -494,6 +519,7 @@ def autosave():
 
     conn.commit()
     conn.close()
+    print("✅ Autosave successful")
     return {"success": True}
 
 
@@ -659,10 +685,6 @@ def logout_user_dashboard():
     return redirect(url_for('login_user'))  # 👈 Redirect to login page after logout
 
 
-
-@app.route('/')
-def home_redirect():
-    return redirect(url_for('dashboard'))
 
 
 if __name__ == "__main__":

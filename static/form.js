@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', function () {
   let current = 0
 
 
+let autosaveTimeout;
+
 function autosaveFormData() {
   const form = document.getElementById('application-form');
   const formData = new FormData(form);
