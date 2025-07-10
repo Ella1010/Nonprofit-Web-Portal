@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, make_response, session, send_file, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, make_response, session, send_from_directory
 import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -780,7 +780,7 @@ def reset_password(token):
 def serve_uploaded_file(filename):
     if not session.get("admin"):
         return "Unauthorized", 403
-    return send_from_directory(os.path.join(UPLOAD_DIR, filename))
+    return send_from_directory(UPLOAD_DIR, filename)
 
 
 
