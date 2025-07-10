@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const progressSteps = document.querySelectorAll('.progress-step');
   const nextBtns = document.querySelectorAll('.next-btn');
   const prevBtns = document.querySelectorAll('.prev-btn');
-  let current = 0
+  let current = 0;
 
 
 let autosaveTimeout;
@@ -38,13 +38,20 @@ function autosaveFormData() {
   });
 }
 
-/*let autosaveTimeout;
+/*autosave func*/
+
+
 document.querySelectorAll('input, textarea, select').forEach(el => {
   el.addEventListener('input', () => {
     clearTimeout(autosaveTimeout);
-    autosaveTimeout = setTimeout(autosaveFormData, 2000);
+    autosaveTimeout = setTimeout(autosaveFormData, 800); // Faster feel
+    el.classList.remove('highlight-missing');
   });
-});*/
+
+  if (el.tagName === 'SELECT') {
+    el.addEventListener('change', autosaveFormData);
+  }
+});
 
 
 
@@ -92,6 +99,11 @@ function generateReviewContent() {
       ["School Location", "school_location"],
       ["School Contact", "school_contact"],
     ]),
+    block("Academic Info", [
+  ["Subjects", "subjects"],
+  ["Academic Interests", "interests"],
+  ]),
+
     block("Teacher Info", [
       ["Teacher Name", "teacher_name"],
       ["Teacher Contact", "teacher_contact"],
@@ -215,7 +227,7 @@ function createActivityBlock(type = '', position = '', org = '', desc = '') {
   div.innerHTML = `
     <hr />
     <h3>Activity</h3>
-    <label>Activity Name<input name="activity_type[]" value="${type}" required /></label>
+    <label>Activity Type<input name="activity_type[]" value="${type}" required /></label>
     <label>Position<input name="activity_position[]" value="${position}" maxlength="50" required /></label>
     <label>Organization<input name="activity_org[]" value="${org}" maxlength="100" required /></label>
     <label>Description<textarea name="activity_desc[]" required>${desc}</textarea></label>
@@ -231,12 +243,17 @@ function createActivityBlock(type = '', position = '', org = '', desc = '') {
   const descTextarea = div.querySelector('textarea[name="activity_desc[]"]');
   enforceWordLimit(descTextarea, 50);
 
-  div.querySelectorAll('input, textarea, select').forEach(el => {
+div.querySelectorAll('input, textarea, select').forEach(el => {
   el.addEventListener('input', () => {
     clearTimeout(autosaveTimeout);
-    autosaveTimeout = setTimeout(autosaveFormData, 2000);
+    autosaveTimeout = setTimeout(autosaveFormData, 800);
   });
+
+  if (el.tagName === 'SELECT') {
+    el.addEventListener('change', autosaveFormData);
+  }
 });
+
 
 
   return div;
@@ -264,6 +281,30 @@ if (window.prefilledActivities && window.prefilledActivities.length) {
     ));
   });
 }
+
+
+// ====== File Size Validation (5MB limit) ======
+const maxSize = 5 * 1024 * 1024; // 5MB
+const fileInputs = document.querySelectorAll('input[type="file"]');
+
+fileInputs.forEach(input => {
+  const warning = document.createElement('div');
+  warning.style.color = 'red';
+  warning.style.fontSize = '12px';
+  warning.className = 'file-size-warning';
+  input.parentNode.appendChild(warning);
+
+  input.addEventListener("change", function () {
+    const file = input.files[0];
+    if (file && file.size > maxSize) {
+      warning.textContent = "❌ File too large (max 5MB)";
+    } else {
+      warning.textContent = "";
+    }
+  });
+});
+
+
 
 
 
@@ -354,6 +395,23 @@ if (!gradeReportInput.files || gradeReportInput.files.length === 0) {
   alert("Please upload your most recent grade report.");
   return;
 }
+// File size check before submission
+let fileTooLarge = false;
+fileInputs.forEach(input => {
+  const file = input.files[0];
+  const warning = input.parentNode.querySelector('.file-size-warning');
+  if (file && file.size > maxSize) {
+    warning.textContent = "❌ File too large (max 5MB)";
+    fileTooLarge = true;
+  } else if (warning) {
+    warning.textContent = "";
+  }
+});
+if (fileTooLarge) {
+  e.preventDefault();
+  alert("One or more files are too large. Please fix them before submitting.");
+  return;
+}
   if (current !== steps.length - 1) {
     e.preventDefault();  // prevent accidental submit on intermediate steps
     return;
@@ -405,18 +463,7 @@ if (!gradeReportInput.files || gradeReportInput.files.length === 0) {
     }
   });
 
-// ✅ Attach autosave listeners to ALL current form fields (including optional_info)
-setTimeout(() => {
-  document.querySelectorAll('input, textarea, select').forEach(el => {
-    el.addEventListener('input', () => {
-      clearTimeout(autosaveTimeout);
-      autosaveTimeout = setTimeout(autosaveFormData, 2000);
-      el.classList.remove('highlight-missing'); // 👈 Also remove red
 
-    });
-    console.log("Autosave attached to:", el.name); // optional debug
-  });
-}, 50);
 
 
 });

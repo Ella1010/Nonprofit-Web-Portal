@@ -144,7 +144,7 @@
     <label>Upload your most recent grade report (PDF or image)
       <input type="file" name="grade_report" accept=".pdf,.jpg,.jpeg,.png">
       <p style="font-size: 13px; color: gray; margin-top: 4px;">
-  This file will only be saved after you submit the full application. If you log out before submitting, you’ll need to upload it again.
+  This file will only be saved after you submit the full application. If you log out before submitting, you’ll need to upload it again. Max file size: 5MB
 </p>
 
     </label>
@@ -156,7 +156,7 @@
   </section>
 
       <section class="form-step">
-  <h2>Activities</h2>
+  <h2>Extracurricular Activities</h2>
   <div id="activities-container"></div>
   <button type="button" id="add-activity">➕ Add Activity</button>
   <div class="step-buttons">
@@ -172,10 +172,10 @@
         <label>PEAR hopes to bring people with diverse backgrounds together to collaborate, from tackling Africa’s biggest challenges to lending a helping hand. Describe one way you have collaborated with others to learn from them, with them, or contribute to your community together. (max 200 words)<textarea name="essay2">{{ draft.essay2 or '' }}</textarea>
 </label>
         <label>Why do you want to be part of the PEAR Summer Program? What are you hoping to learn or take away from it? (max 150 words)<textarea name="essay3">{{ draft.essay3 or '' }}</textarea>
-</textarea></label>
+</label>
         <label>Optional Upload<input type="file" name="upload" />
 <p style="font-size: 13px; color: gray; margin-top: 4px;">
-  This file will only be saved after you submit the full application. If you log out before submitting, you’ll need to upload it again.
+  This file will only be saved after you submit the full application. If you log out before submitting, you’ll need to upload it again. Max file size: 5MB
 </p>
 
         </label>
@@ -220,5 +220,4 @@
 </html>
 
 
-</body>
-</html>
+

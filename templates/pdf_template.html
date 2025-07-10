@@ -78,20 +78,24 @@
 
   <div class="section">
     <h2>Uploads</h2>
-    {% if app_data.grade_report_path %}
-      <p><strong>Grade Report:</strong>
-        <a href="{{ request.url_root ~ app_data.grade_report_path }}">
-          {{ request.url_root ~ app_data.grade_report_path }}
-        </a>
-      </p>
-    {% endif %}
-    {% if app_data.upload_path %}
-      <p><strong>Optional Upload:</strong>
-        <a href="{{ request.url_root ~ app_data.upload_path }}">
-          {{ request.url_root ~ app_data.upload_path }}
-        </a>
-      </p>
-    {% endif %}
+    
+    <h2>Uploads</h2>
+
+  {% if app_data.grade_report_path %}
+    <p><strong>Grade Report:</strong>
+      <a href="{{ request.url_root ~ 'uploads/' ~ app_data.grade_report_path.split('/')[-1] }}">
+        {{ request.url_root ~ 'uploads/' ~ app_data.grade_report_path.split('/')[-1] }}
+      </a>
+    </p>
+  {% endif %}
+
+  {% if app_data.upload_path %}
+    <p><strong>Optional Upload:</strong>
+      <a href="{{ request.url_root ~ 'uploads/' ~ app_data.upload_path.split('/')[-1] }}">
+        {{ request.url_root ~ 'uploads/' ~ app_data.upload_path.split('/')[-1] }}
+      </a>
+    </p>
+  {% endif %}
   </div>
 </body>
 </html>

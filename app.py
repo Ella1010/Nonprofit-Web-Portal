@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, make_response, session
+from flask import Flask, render_template, request, redirect, url_for, make_response, session, send_file, send_from_directory
 import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -15,14 +15,28 @@ from flask import send_file
 import secrets
 from datetime import datetime, timedelta
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
-from dotenv import load_dotenv
+import uuid
+from datetime import datetime, timezone
+from werkzeug.utils import secure_filename  # put this at the top of your file if not already
+from werkzeug.exceptions import RequestEntityTooLarge
 
 
 load_dotenv()
 
 app = Flask(__name__)
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 10MB limit
+
+
+@app.errorhandler(RequestEntityTooLarge)
+def file_too_large(e):
+    flash("Your uploaded file is too large. The limit is 5MB.")
+    return redirect(request.referrer or url_for('index')), 413
+
 app.secret_key = os.getenv("SECRET_KEY") or "supersecret"
 
+UPLOAD_DIR = '/mnt/data/uploads'
+# UPLOAD_DIR = os.path.join(os.getcwd(), 'uploads')
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
 def login_required(f):
@@ -134,13 +148,13 @@ def insert_application(data, grade_report_path=None, optional_upload_path=None, 
 
     cursor.execute("""
     INSERT INTO applications (
-        student_name, student_gender, dob, email, phone, grade,
+        user_id, student_name, student_gender, dob, email, phone, grade,
         parent_name, parent_contact, school_name, school_location, school_contact,
         teacher_name, teacher_contact, teacher_email, subjects, interests,
         accommodation_required, accommodation_comment,
         essay1, essay2, essay3, optional_info,
         grade_report_path, upload_path
-    ) VALUES (
+    ) VALUES ( %(user_id)s,
         %(student_name)s, %(student_gender)s, %(dob)s, %(email)s, %(phone)s, %(grade)s,
         %(parent_name)s, %(parent_contact)s, %(school_name)s, %(school_location)s, %(school_contact)s,
         %(teacher_name)s, %(teacher_contact)s, %(teacher_email)s, %(subjects)s, %(interests)s,
@@ -229,20 +243,20 @@ def submit():
     app_id = app_row[0]
 
     # Handle file uploads
-    os.makedirs('static/uploads', exist_ok=True)
 
     grade_file = request.files.get('grade_report')
     grade_path = None
     if grade_file and grade_file.filename:
 
-        grade_path = f"static/uploads/{grade_file.filename}"
+        filename = f"{uuid.uuid4().hex}_{secure_filename(grade_file.filename)}"
+        grade_path = os.path.join(UPLOAD_DIR, filename)
         grade_file.save(grade_path)
 
     optional_file = request.files.get('upload')
     optional_path = None
     if optional_file and optional_file.filename:
-
-        optional_path = f"static/uploads/{optional_file.filename}"
+        filename = f"{uuid.uuid4().hex}_{secure_filename(optional_file.filename)}"
+        optional_path = os.path.join(UPLOAD_DIR, filename)
         optional_file.save(optional_path)
 
     # Dynamic activities
@@ -287,7 +301,10 @@ def submit():
             optional_info = %s,
             grade_report_path = %s,
             upload_path = %s,
-            status = 'submitted'
+            status = 'submitted',
+            submitted_at = %s
+
+
         WHERE id = %s
     """, (
         request.form.get("student_name"),
@@ -314,7 +331,9 @@ def submit():
         request.form.get("optional_info"),
         grade_path,
         optional_path,
+        datetime.now(timezone.utc),
         app_id
+
     ))
 
     conn.commit()
@@ -428,13 +447,13 @@ def autosave():
 
 
 
-
+    user_id = session.get("user_id")
 
     if not session.get("user_id"):
 
         return {"error": "Not logged in"}, 401
 
-    user_id = session["user_id"]
+
 
     fields = [
         "student_name", "student_gender", "dob", "email", "phone", "grade",
@@ -604,10 +623,22 @@ def admin():
     if not session.get("admin"):
         return redirect(url_for("login"))
 
+    status_filter = request.args.get("status")
+
     conn = get_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
 
-    cursor.execute("SELECT * FROM applications")
+    if status_filter in ["submitted", "incomplete"]:
+        cursor.execute("""
+            SELECT * FROM applications
+            WHERE status = %s
+            ORDER BY submitted_at DESC NULLS LAST, created_at DESC
+        """, (status_filter,))
+    else:
+        cursor.execute("""
+            SELECT * FROM applications
+            ORDER BY submitted_at DESC NULLS LAST, created_at DESC
+        """)
     applications = cursor.fetchall()
 
     cursor.execute("SELECT * FROM activities")
@@ -744,6 +775,13 @@ def reset_password(token):
         return redirect(url_for('login_user'))
 
     return render_template('reset_password.html', email=email)
+
+@app.route('/uploads/<filename>')
+def serve_uploaded_file(filename):
+    if not session.get("admin"):
+        return "Unauthorized", 403
+    return send_from_directory(os.path.join(UPLOAD_DIR, filename))
+
 
 
 

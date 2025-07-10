@@ -97,6 +97,8 @@
           <th>Activities</th>
           <th>PDF</th>
           <th>Uploads</th> <!-- ✅ Added header -->
+          <th>Status</th>
+
         </tr>
       </thead>
       <tbody>
@@ -125,6 +127,16 @@
               <a href="{{ url_for('static', filename=row['upload_path'].split('static/')[-1]) }}" target="_blank">Optional Upload</a>
             {% endif %}
           </td>
+          <td>
+  {% if row.status == 'submitted' %}
+    <span style="color: green; font-weight: bold;">Submitted</span>
+  {% else %}
+    <span style="color: gray;">Draft</span>
+  {% endif %}
+</td>
+
+
+
         </tr>
         {% endfor %}
       </tbody>
