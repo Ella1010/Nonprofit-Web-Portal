@@ -120,13 +120,14 @@
             <a href="{{ url_for('download_response_pdf', app_id=row['id']) }}">Download</a>
           </td>
           <td>
-            {% if row['grade_report_path'] %}
-              <a href="{{ url_for('static', filename=row['grade_report_path'].split('static/')[-1]) }}" target="_blank">Grade Report</a><br>
-            {% endif %}
-            {% if row['upload_path'] %}
-              <a href="{{ url_for('static', filename=row['upload_path'].split('static/')[-1]) }}" target="_blank">Optional Upload</a>
-            {% endif %}
-          </td>
+  {% if row['grade_report_path'] %}
+    <a href="{{ url_for('serve_uploaded_file', filename=row['grade_report_path'].split('/')[-1]) }}" target="_blank">Grade Report</a><br>
+  {% endif %}
+  {% if row['upload_path'] %}
+    <a href="{{ url_for('serve_uploaded_file', filename=row['upload_path'].split('/')[-1]) }}" target="_blank">Optional Upload</a>
+  {% endif %}
+</td>
+
           <td>
   {% if row.status == 'submitted' %}
     <span style="color: green; font-weight: bold;">Submitted</span>
