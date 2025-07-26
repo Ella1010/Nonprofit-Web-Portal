@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, make_response, session, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, make_response, session, send_from_directory, jsonify
 import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -19,6 +19,8 @@ import uuid
 from datetime import datetime, timezone
 from werkzeug.utils import secure_filename  # put this at the top of your file if not already
 from werkzeug.exceptions import RequestEntityTooLarge
+from pytz import timezone
+
 
 
 load_dotenv()
@@ -226,6 +228,13 @@ def index():
 @login_required
 def submit():
 
+     # === Deadline check ===
+    deadline = datetime(2025, 7, 26, 23, 25, 0, tzinfo=timezone.utc)  # 12:20 AM WAT = 11:20 PM UTC
+    now = datetime.now(timezone.utc)
+
+    if now > deadline:
+        return redirect(url_for('submissions_closed'))  # or render_template("closed.html")
+
     conn = get_connection()
     cursor = conn.cursor()
     user_id = session["user_id"]
@@ -378,6 +387,9 @@ The PEAR Team"""
     return redirect(url_for("dashboard"))
 
 
+@app.route('/closed')
+def submissions_closed():
+    return render_template("closed.html")
 
 
 
@@ -444,6 +456,14 @@ def download_user_pdf(app_id):
 
 @app.route('/autosave', methods=['POST'])
 def autosave():
+
+      # === Deadline check ===
+
+    deadline = datetime(2025, 7, 26, 23, 25, 0, tzinfo=timezone.utc)  # 12:20 AM WAT = 11:20 PM UTC
+    now = datetime.now(timezone.utc)
+
+    if now > deadline:
+        return jsonify({"error": "The deadline has passed. Autosave is disabled."}), 403
 
 
 

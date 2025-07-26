@@ -216,6 +216,31 @@
   window.prefilledActivities = {{ activities | tojson | safe }};
 </script>
 <script src="/static/form.js"></script>
+
+<script>
+  const now = new Date();
+  const deadline = new Date("2025-07-26T23:25:00Z"); // 00:25 WAT == 23:25 UTC
+
+  if (now > deadline) {
+    const submitBtn = document.querySelector('section.form-step:last-of-type button[type="submit"]');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerText = "Submissions Closed";
+      submitBtn.style.cursor = "not-allowed";
+      submitBtn.style.background = "#ccc";
+    }
+
+    const message = document.createElement("p");
+    message.textContent = "⏰ The application deadline has passed. You can no longer submit.";
+    message.style.color = "red";
+    message.style.fontWeight = "bold";
+    message.style.marginTop = "15px";
+    document.getElementById("review-content").appendChild(message);
+  }
+</script>
+</body>
+</html>
+
 </body>
 </html>
 
