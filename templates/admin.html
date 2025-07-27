@@ -76,14 +76,19 @@
     }
 
     select.review-status-select {
-      font-weight: bold;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      padding: 6px;
-      color: white;
-      appearance: none; /* Remove native styling for consistency */
-      background-color: #6b7280; /* Fallback for undefined status */
-    }
+  font-weight: bold;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 6px;
+  color: white;
+  width: 140px;
+  box-sizing: border-box;
+  appearance: none;
+  background-color: #6b7280;
+}
+
+
+    
 
     .status-accepted {
       background-color: #16a34a;
@@ -173,9 +178,27 @@
           </td>
           <td>
             <form method="POST" action="{{ url_for('update_review_status', app_id=row['id'], status=request.args.get('review_status')) }}">
+
               <select name="new_status"
-                      class="review-status-select status-{{ row.review_status.replace('_', '-') if row.review_status }}"
-                      onchange="this.form.submit()">
+  class="review-status-select"
+  style="background-color: {% if row.review_status == 'accepted' %}#16a34a
+                           {% elif row.review_status == 'rejected' %}#dc2626
+                           {% elif row.review_status == 'waitlisted' %}#f59e0b
+                           {% elif row.review_status == 'on_hold' %}#6b7280
+                           {% else %}#6b7280{% endif %};
+         color: white;
+         padding: 6px;
+         border-radius: 6px;
+         font-weight: bold;
+         width: 100%;
+         box-sizing: border-box;
+         white-space: nowrap;"
+  onchange="this.form.submit()">
+
+
+
+              
+
                 <option value="" disabled {% if not row.review_status %}selected{% endif %}>-- Select --</option>
                 <option value="accepted" {% if row.review_status == 'accepted' %}selected{% endif %}>Accepted</option>
                 <option value="rejected" {% if row.review_status == 'rejected' %}selected{% endif %}>Rejected</option>
