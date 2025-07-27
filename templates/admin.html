@@ -77,10 +77,12 @@
 
     select.review-status-select {
       font-weight: bold;
-      border: none;
+      border: 1px solid #ccc;
       border-radius: 6px;
-      padding: 4px;
+      padding: 6px;
       color: white;
+      appearance: none; /* Remove native styling for consistency */
+      background-color: #6b7280; /* Fallback for undefined status */
     }
 
     .status-accepted {
