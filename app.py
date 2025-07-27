@@ -20,6 +20,8 @@ from datetime import datetime, timezone
 from werkzeug.utils import secure_filename  # put this at the top of your file if not already
 from werkzeug.exceptions import RequestEntityTooLarge
 from pytz import timezone
+import zipfile
+
 
 
 
@@ -394,6 +396,8 @@ def submissions_closed():
 
 
 
+
+
 @app.route('/dashboard')
 @login_required
 def dashboard():
@@ -452,6 +456,43 @@ def download_user_pdf(app_id):
                      download_name='PEAR_Submitted_Application.pdf')
 
 
+@app.route('/admin/download_all_pdfs')
+def download_all_pdfs():
+    if not session.get("admin"):
+        return redirect(url_for("login"))
+
+    conn = get_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+    # Fetch all submitted applications
+    cursor.execute("SELECT * FROM applications WHERE status = 'submitted'")
+    applications = cursor.fetchall()
+
+    # Fetch all activities once and map to applications
+    cursor.execute("SELECT * FROM activities")
+    all_activities = cursor.fetchall()
+
+    activity_map = defaultdict(list)
+    for act in all_activities:
+        activity_map[act["application_id"]].append(act)
+
+    conn.close()
+
+    # Create ZIP in memory
+    zip_buffer = BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+        for app in applications:
+            activities = activity_map.get(app["id"], [])
+            rendered = render_template("pdf_template.html", app_data=app, activities=activities, request=request)
+            pdf_io = BytesIO()
+            pisa_status = pisa.CreatePDF(rendered, dest=pdf_io)
+            if not pisa_status.err:
+                pdf_io.seek(0)
+                filename = f"{app['student_name'].replace(' ', '_')}_application_{app['id']}.pdf"
+                zip_file.writestr(filename, pdf_io.read())
+
+    zip_buffer.seek(0)
+    return send_file(zip_buffer, mimetype='application/zip', as_attachment=True, download_name='all_applications.zip')
 
 
 @app.route('/autosave', methods=['POST'])
@@ -644,23 +685,28 @@ def admin():
         return redirect(url_for("login"))
 
     status_filter = request.args.get("status")
+    review_status_filter = request.args.get("review_status")
 
     conn = get_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
 
+    # Build dynamic query and parameters
+    query = "SELECT * FROM applications WHERE 1=1"
+    params = []
+
     if status_filter in ["submitted", "incomplete"]:
-        cursor.execute("""
-            SELECT * FROM applications
-            WHERE status = %s
-            ORDER BY submitted_at DESC NULLS LAST, created_at DESC
-        """, (status_filter,))
-    else:
-        cursor.execute("""
-            SELECT * FROM applications
-            ORDER BY submitted_at DESC NULLS LAST, created_at DESC
-        """)
+        query += " AND status = %s"
+        params.append(status_filter)
+
+    if review_status_filter in ["accepted", "rejected", "waitlisted", "on_hold"]:
+        query += " AND review_status = %s"
+        params.append(review_status_filter)
+
+    query += " ORDER BY submitted_at DESC NULLS LAST, created_at DESC"
+    cursor.execute(query, tuple(params))
     applications = cursor.fetchall()
 
+    # Get activities
     cursor.execute("SELECT * FROM activities")
     activities = cursor.fetchall()
 
@@ -672,6 +718,26 @@ def admin():
         app['activities'] = act_map.get(app['id'], [])
 
     return render_template('admin.html', rows=applications)
+
+@app.route("/admin/update_review_status/<int:app_id>", methods=["POST"])
+def update_review_status(app_id):
+    if not session.get("admin"):
+        return redirect(url_for("login"))
+
+    new_status = request.form.get("new_status")
+
+    if new_status not in ["accepted", "rejected", "waitlisted", "on_hold"]:
+        flash("Invalid review status.")
+        return redirect(url_for("admin"))
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("UPDATE applications SET review_status = %s WHERE id = %s", (new_status, app_id))
+    conn.commit()
+    conn.close()
+    return redirect(url_for("admin", status=request.args.get("status")))
+
 
 @app.route('/admin/pdf/<int:app_id>')
 def download_response_pdf(app_id):
