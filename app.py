@@ -457,20 +457,13 @@ def download_user_pdf(app_id):
                      download_name='PEAR_Submitted_Application.pdf')
 
 
-def generate_pdf(app):
-    buffer = BytesIO()
-    p = canvas.Canvas(buffer)
+def generate_pdf(app, activities=[]):
+    rendered = render_template("submitted_pdf.html", app=app, activities=activities)
+    pdf_io = BytesIO()
+    pisa_status = pisa.CreatePDF(rendered, dest=pdf_io)
+    pdf_io.seek(0)
+    return pdf_io if not pisa_status.err else None
 
-    # Replace with actual fields
-    p.drawString(100, 800, f"Application ID: {app['id']}")
-    p.drawString(100, 780, f"Name: {app.get('student_name', 'N/A')}")
-    p.drawString(100, 760, f"Email: {app.get('email', 'N/A')}")
-    # Add more fields as needed...
-
-    p.showPage()
-    p.save()
-    buffer.seek(0)
-    return buffer
 
 @app.route("/admin/download_all_pdfs")
 def download_all_pdfs():
@@ -492,7 +485,10 @@ def download_all_pdfs():
                 filename = f"{name_part}_application_{app['id']}.pdf"
 
                 # Generate PDF into a BytesIO buffer
-                pdf_io = generate_pdf(app)  # Should return BytesIO, not a filepath
+                cursor.execute("SELECT * FROM activities WHERE application_id = %s", (app['id'],))
+                activities = cursor.fetchall()
+                pdf_io = generate_pdf(app, activities)
+
 
                 if pdf_io:
                     zipf.writestr(filename, pdf_io.getvalue())
