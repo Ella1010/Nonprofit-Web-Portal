@@ -21,7 +21,8 @@ from werkzeug.utils import secure_filename  # put this at the top of your file i
 from werkzeug.exceptions import RequestEntityTooLarge
 from pytz import timezone
 import zipfile
-
+from zipfile import ZipFile
+from reportlab.pdfgen import canvas
 
 
 
@@ -456,43 +457,57 @@ def download_user_pdf(app_id):
                      download_name='PEAR_Submitted_Application.pdf')
 
 
-@app.route('/admin/download_all_pdfs')
+def generate_pdf(app):
+    buffer = BytesIO()
+    p = canvas.Canvas(buffer)
+
+    # Replace with actual fields
+    p.drawString(100, 800, f"Application ID: {app['id']}")
+    p.drawString(100, 780, f"Name: {app.get('student_name', 'N/A')}")
+    p.drawString(100, 760, f"Email: {app.get('email', 'N/A')}")
+    # Add more fields as needed...
+
+    p.showPage()
+    p.save()
+    buffer.seek(0)
+    return buffer
+
+@app.route("/admin/download_all_pdfs")
 def download_all_pdfs():
     if not session.get("admin"):
-        return redirect(url_for("login"))
+        return redirect(url_for("login"))  # or "admin_login" if that's your route
 
     conn = get_connection()
-    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-    # Fetch all submitted applications
     cursor.execute("SELECT * FROM applications WHERE status = 'submitted'")
-    applications = cursor.fetchall()
+    apps = cursor.fetchall()
 
-    # Fetch all activities once and map to applications
-    cursor.execute("SELECT * FROM activities")
-    all_activities = cursor.fetchall()
-
-    activity_map = defaultdict(list)
-    for act in all_activities:
-        activity_map[act["application_id"]].append(act)
-
-    conn.close()
-
-    # Create ZIP in memory
     zip_buffer = BytesIO()
-    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
-        for app in applications:
-            activities = activity_map.get(app["id"], [])
-            rendered = render_template("pdf_template.html", app_data=app, activities=activities, request=request)
-            pdf_io = BytesIO()
-            pisa_status = pisa.CreatePDF(rendered, dest=pdf_io)
-            if not pisa_status.err:
-                pdf_io.seek(0)
-                filename = f"{app['student_name'].replace(' ', '_')}_application_{app['id']}.pdf"
-                zip_file.writestr(filename, pdf_io.read())
+
+    with ZipFile(zip_buffer, 'w') as zipf:
+        for app in apps:
+            try:
+                name_part = app['student_name'].replace(' ', '_') if app.get('student_name') else f"unnamed_{app['id']}"
+                filename = f"{name_part}_application_{app['id']}.pdf"
+
+                # Generate PDF into a BytesIO buffer
+                pdf_io = generate_pdf(app)  # Should return BytesIO, not a filepath
+
+                if pdf_io:
+                    zipf.writestr(filename, pdf_io.getvalue())
+            except Exception as e:
+                print(f"Skipping app ID {app['id']}: {e}")
 
     zip_buffer.seek(0)
-    return send_file(zip_buffer, mimetype='application/zip', as_attachment=True, download_name='all_applications.zip')
+
+    return send_file(
+        zip_buffer,
+        mimetype='application/zip',
+        as_attachment=True,
+        download_name='all_applications.zip'
+    )
+
 
 
 @app.route('/autosave', methods=['POST'])

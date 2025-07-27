@@ -5,27 +5,25 @@
   <title>Admin Dashboard</title>
   <link rel="stylesheet" href="/static/styles.css" />
   <style>
-  .logout-button {
-  position: absolute;
-  top: 20px;
-  right: 30px;
-  background-color: #F97316;
-  color: white;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  text-decoration: none;
-  font-weight: bold;
-  transition: background-color 0.2s ease;
-}
+    .logout-button {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      background-color: #F97316;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      text-decoration: none;
+      font-weight: bold;
+      transition: background-color 0.2s ease;
+    }
 
-.logout-button:hover {
-  background-color: #e55b04;
-}
+    .logout-button:hover {
+      background-color: #e55b04;
+    }
 
-  
-    
     table {
       width: 100%;
       border-collapse: collapse;
@@ -77,57 +75,51 @@
       padding: 0;
     }
 
+    select.review-status-select {
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      padding: 4px;
+      color: white;
+    }
 
-select.review-status-select {
-  font-weight: bold;
-}
-
-select.review-status-select option[value="accepted"] {
-  color: green;
-}
-select.review-status-select option[value="rejected"] {
-  color: red;
-}
-select.review-status-select option[value="waitlisted"] {
-  color: goldenrod;
-}
-select.review-status-select option[value="on_hold"] {
-  color: gray;
-}
-
-
-
-
-
+    .status-accepted {
+      background-color: #16a34a;
+    }
+    .status-rejected {
+      background-color: #dc2626;
+    }
+    .status-waitlisted {
+      background-color: #f59e0b;
+    }
+    .status-on-hold {
+      background-color: #6b7280;
+    }
   </style>
 </head>
 <body>
   <div class="header">
     <h1>Admin Dashboard</h1>
     <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
-
   </div>
 
   <main class="form-container">
-
     <form method="get" style="text-align: center; margin-bottom: 20px;">
-    <label for="status">Filter by Review Status:</label>
-    <select name="review_status" id="status" onchange="this.form.submit()" style="padding: 6px; margin-left: 10px;">
-      <option value="">All</option>
-      <option value="accepted" {% if request.args.get('review_status') == 'accepted' %}selected{% endif %}>Accepted</option>
-      <option value="rejected" {% if request.args.get('review_status') == 'rejected' %}selected{% endif %}>Rejected</option>
-      <option value="waitlisted" {% if request.args.get('review_status') == 'waitlisted' %}selected{% endif %}>Waitlisted</option>
-      <option value="on_hold" {% if request.args.get('review_status') == 'on_hold' %}selected{% endif %}>On Hold</option>
-    </select>
-  </form>
+      <label for="status">Filter by Review Status:</label>
+      <select name="review_status" id="status" onchange="this.form.submit()" style="padding: 6px; margin-left: 10px;">
+        <option value="">All</option>
+        <option value="accepted" {% if request.args.get('review_status') == 'accepted' %}selected{% endif %}>Accepted</option>
+        <option value="rejected" {% if request.args.get('review_status') == 'rejected' %}selected{% endif %}>Rejected</option>
+        <option value="waitlisted" {% if request.args.get('review_status') == 'waitlisted' %}selected{% endif %}>Waitlisted</option>
+        <option value="on_hold" {% if request.args.get('review_status') == 'on_hold' %}selected{% endif %}>On Hold</option>
+      </select>
+    </form>
 
-  <!-- 📥 Download ZIP of All Submitted Applications -->
-<div style="text-align: center; margin-bottom: 20px;">
-  <a href="{{ url_for('download_all_pdfs') }}" class="btn btn-primary">
-    📥 Download All Submitted PDFs (ZIP)
-  </a>
-</div>
-
+    <div style="text-align: center; margin-bottom: 20px;">
+      <a href="{{ url_for('download_all_pdfs') }}" class="btn btn-primary">
+        📥 Download All Submitted PDFs (ZIP)
+      </a>
+    </div>
 
     <table>
       <thead>
@@ -139,11 +131,9 @@ select.review-status-select option[value="on_hold"] {
           <th>Grade</th>
           <th>Activities</th>
           <th>PDF</th>
-          <th>Uploads</th> <!-- ✅ Added header -->
+          <th>Uploads</th>
           <th>Status</th>
           <th>Review Status</th>
-
-
         </tr>
       </thead>
       <tbody>
@@ -165,36 +155,33 @@ select.review-status-select option[value="on_hold"] {
             <a href="{{ url_for('download_response_pdf', app_id=row['id']) }}">Download</a>
           </td>
           <td>
-  {% if row['grade_report_path'] %}
-    <a href="{{ url_for('serve_uploaded_file', filename=row['grade_report_path'].split('/')[-1]) }}" target="_blank">Grade Report</a><br>
-  {% endif %}
-  {% if row['upload_path'] %}
-    <a href="{{ url_for('serve_uploaded_file', filename=row['upload_path'].split('/')[-1]) }}" target="_blank">Optional Upload</a>
-  {% endif %}
-</td>
-
+            {% if row['grade_report_path'] %}
+              <a href="{{ url_for('serve_uploaded_file', filename=row['grade_report_path'].split('/')[-1]) }}" target="_blank">Grade Report</a><br>
+            {% endif %}
+            {% if row['upload_path'] %}
+              <a href="{{ url_for('serve_uploaded_file', filename=row['upload_path'].split('/')[-1]) }}" target="_blank">Optional Upload</a>
+            {% endif %}
+          </td>
           <td>
-  {% if row.status == 'submitted' %}
-    <span style="color: green; font-weight: bold;">Submitted</span>
-  {% else %}
-    <span style="color: gray;">Draft</span>
-  {% endif %}
-</td>
-<td>
-  <form method="POST" action="{{ url_for('update_review_status', app_id=row['id'], status=request.args.get('review_status')) }}">
-    <select name="new_status" class="review-status-select" onchange="this.form.submit()">
-      <option value="" disabled {% if not row.review_status %}selected{% endif %}>-- Select --</option>
-      <option value="accepted" {% if row.review_status == 'accepted' %}selected{% endif %}>Accepted</option>
-      <option value="rejected" {% if row.review_status == 'rejected' %}selected{% endif %}>Rejected</option>
-      <option value="waitlisted" {% if row.review_status == 'waitlisted' %}selected{% endif %}>Waitlisted</option>
-      <option value="on_hold" {% if row.review_status == 'on_hold' %}selected{% endif %}>On Hold</option>
-    </select>
-  </form>
-</td>
-
-
-
-
+            {% if row.status == 'submitted' %}
+              <span style="color: green; font-weight: bold;">Submitted</span>
+            {% else %}
+              <span style="color: gray;">Draft</span>
+            {% endif %}
+          </td>
+          <td>
+            <form method="POST" action="{{ url_for('update_review_status', app_id=row['id'], status=request.args.get('review_status')) }}">
+              <select name="new_status"
+                      class="review-status-select status-{{ row.review_status.replace('_', '-') if row.review_status }}"
+                      onchange="this.form.submit()">
+                <option value="" disabled {% if not row.review_status %}selected{% endif %}>-- Select --</option>
+                <option value="accepted" {% if row.review_status == 'accepted' %}selected{% endif %}>Accepted</option>
+                <option value="rejected" {% if row.review_status == 'rejected' %}selected{% endif %}>Rejected</option>
+                <option value="waitlisted" {% if row.review_status == 'waitlisted' %}selected{% endif %}>Waitlisted</option>
+                <option value="on_hold" {% if row.review_status == 'on_hold' %}selected{% endif %}>On Hold</option>
+              </select>
+            </form>
+          </td>
         </tr>
         {% endfor %}
       </tbody>
