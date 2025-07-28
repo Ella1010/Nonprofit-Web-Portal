@@ -457,8 +457,8 @@ def download_user_pdf(app_id):
                      download_name='PEAR_Submitted_Application.pdf')
 
 
-def generate_pdf(app, activities=[]):
-    rendered = render_template("submitted_pdf.html", app=app, activities=activities)
+def generate_pdf(app, activities=[], grade_report_link=None, upload_link=None):
+    rendered = render_template("submitted_pdf.html", app=app, activities=activities, grade_report_link= grade_report_link, upload_link=upload_link)
     pdf_io = BytesIO()
     pisa_status = pisa.CreatePDF(rendered, dest=pdf_io)
     pdf_io.seek(0)
@@ -483,15 +483,30 @@ def download_all_pdfs():
             try:
                 name_part = app['student_name'].replace(' ', '_') if app.get('student_name') else f"unnamed_{app['id']}"
                 filename = f"{name_part}_application_{app['id']}.pdf"
+                base_name = f"{name_part}_application_{app['id']}"
+
 
                 # Generate PDF into a BytesIO buffer
                 cursor.execute("SELECT * FROM activities WHERE application_id = %s", (app['id'],))
                 activities = cursor.fetchall()
+
+
                 pdf_io = generate_pdf(app, activities)
 
 
                 if pdf_io:
                     zipf.writestr(filename, pdf_io.getvalue())
+
+                # Attach Grade Report file if exists
+                if app.get("grade_report_path") and os.path.exists(app["grade_report_path"]):
+                    ext = os.path.splitext(app["grade_report_path"])[1]
+                    zipf.write(app["grade_report_path"], arcname=f"{base_name}_grade_report{ext}")
+
+                # Attach Optional Upload if exists
+                if app.get("upload_path") and os.path.exists(app["upload_path"]):
+                    ext = os.path.splitext(app["upload_path"])[1]
+                    zipf.write(app["upload_path"], arcname=f"{base_name}_optional_upload{ext}")
+
             except Exception as e:
                 print(f"Skipping app ID {app['id']}: {e}")
 
