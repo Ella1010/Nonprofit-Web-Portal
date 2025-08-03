@@ -70,8 +70,50 @@
 </head>
 <body>
     {% if review_status == 'accepted' %}
-        <img id="confettiGif" src="{{ url_for('static', filename='confetti.gif') }}" class="confetti-overlay" alt="Celebration">
+     <!-- Load confetti library -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+
+  <!-- Confetti trigger -->
+  <script>
+    window.addEventListener("load", () => {
+      const duration = 7000; // 7 seconds
+      const animationEnd = Date.now() + duration;
+
+      const defaults = {
+        startVelocity: 30,
+        spread: 360,
+        ticks: 60,
+        zIndex: 9999
+      };
+
+      function randomInRange(min, max) {
+        return Math.random() * (max - min) + min;
+      }
+
+      const interval = setInterval(() => {
+        const timeLeft = animationEnd - Date.now();
+
+        if (timeLeft <= 0) {
+          return clearInterval(interval);
+        }
+
+        const particleCount = 50 * (timeLeft / duration);
+
+        confetti(Object.assign({}, defaults, {
+          particleCount,
+          origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+        }));
+        confetti(Object.assign({}, defaults, {
+          particleCount,
+          origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+        }));
+      }, 250);
+    });
+  </script>
+
     {% endif %}
+
+
     <div class="container">
     <div class="container">
         <div style="text-align: right; margin-bottom: 20px;">
@@ -86,6 +128,7 @@
             <h2>🎉 Congratulations, {{ student_name }}! 🎉</h2>
             <p>You have been <strong>accepted</strong> into the Program for Excellence in African Research 2025 cohort.</p>
             <a href="{{ url_for('download_letter', application_id=applicant_id) }}" class="btn btn-success">Download Letter</a>
+            {% if review_status == 'accepted' %}
         {% elif review_status == 'rejected' %}
             <h2>Thank You, {{ student_name }}</h2>
             <p>We appreciate the time and dedication you put into your application. Due to an overwhelming number of applications, we are unable to offer you a spot in the program this year.</p>
