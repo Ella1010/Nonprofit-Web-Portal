@@ -50,9 +50,29 @@
             font-size: 1.0em;
             color: #222;
         }
+
+        .confetti-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 9999;
+            pointer-events: none;
+            object-fit: cover;
+            background: transparent;
+        }
+
+
+
+
     </style>
 </head>
 <body>
+    {% if review_status == 'accepted' %}
+        <img id="confettiGif" src="{{ url_for('static', filename='confetti.gif') }}" class="confetti-overlay" alt="Celebration">
+    {% endif %}
+    <div class="container">
     <div class="container">
         <div style="text-align: right; margin-bottom: 20px;">
             <form action="/logout_user" method="GET" style="display: inline;">
@@ -62,7 +82,7 @@
 
 
         {% if review_status == 'accepted' %}
-            <img id="confettiGif" src="{{ url_for('static', filename='confetti.gif') }}" class="fireworks" alt="Celebration">
+            
             <h2>🎉 Congratulations, {{ student_name }}! 🎉</h2>
             <p>You have been <strong>accepted</strong> into the Program for Excellence in African Research 2025 cohort.</p>
             <a href="{{ url_for('download_letter', application_id=applicant_id) }}" class="btn btn-success">Download Letter</a>
@@ -93,5 +113,6 @@
         }
       }, 5000);
     </script>
+
 </body>
 </html>
