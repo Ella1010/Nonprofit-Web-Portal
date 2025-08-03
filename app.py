@@ -457,7 +457,7 @@ def download_user_pdf(app_id):
                      download_name='PEAR_Submitted_Application.pdf')
 
 
-def generate_pdf(app, activities=[], grade_report_link=None, upload_link=None):
+def generate_pdf(app, activities=[], grade_report_link=No, upload_link=None):
     rendered = render_template("submitted_pdf.html", app=app, activities=activities, grade_report_link= grade_report_link, upload_link=upload_link)
     pdf_io = BytesIO()
     pisa_status = pisa.CreatePDF(rendered, dest=pdf_io)
@@ -894,7 +894,91 @@ def serve_uploaded_file(filename):
         return "Unauthorized", 403
     return send_from_directory(UPLOAD_DIR, filename)
 
+@app.route('/view_status/<int:application_id>')
+@login_required
+def view_status(application_id):
+    conn = get_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
 
+    # Only show the application if it belongs to the logged-in user
+    cursor.execute("SELECT student_name, review_status FROM applications WHERE id = %s AND user_id = %s", (application_id, session["user_id"]))
+    result = cursor.fetchone()
+
+    if not result:
+        conn.close()
+        return "Applicant not found", 404
+
+    student_name = result["student_name"]
+    review_status = result["review_status"]
+
+    # Get the matching letter from letters table
+    cursor.execute("SELECT content FROM letters WHERE status = %s", (review_status,))
+    letter = cursor.fetchone()
+    conn.close()
+
+    if not letter:
+        return f"No letter found for status '{review_status}'", 404
+
+    letter_content = letter["content"].replace("{{ student_name }}", student_name)
+
+    return render_template(
+        'view_status.html',
+        student_name=student_name,
+        letter_content=letter_content,
+        applicant_id=application_id,
+        review_status=review_status
+    )
+
+
+
+
+# --- Dynamic Letter Download ---
+@app.route('/download_letter/<int:application_id>')
+@login_required
+def download_letter(application_id):
+    conn = get_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+    # Fetch student name and review status for this application
+    cursor.execute("SELECT student_name, review_status FROM applications WHERE id = %s AND user_id = %s", (application_id, session["user_id"]))
+    result = cursor.fetchone()
+
+    if not result:
+        conn.close()
+        return "Applicant not found", 404
+
+    student_name = result["student_name"]
+    review_status = result["review_status"]
+
+    # Fetch letter template/content for this review status
+    cursor.execute("SELECT content FROM letters WHERE status = %s", (review_status,))
+    letter = cursor.fetchone()
+    conn.close()
+
+    if not letter:
+        return f"No letter found for status '{review_status}'", 404
+
+    # Replace placeholder in letter content
+    content = letter["content"].replace("{{ student_name }}", student_name)
+
+    # Option 1: Use a template (recommended for formatting)
+    html = render_template("letter_pdf_template.html", content=content, student_name=student_name, review_status=review_status)
+    html = content
+
+    # Convert HTML to PDF
+    pdf = BytesIO()
+    pisa_status = pisa.CreatePDF(html, dest=pdf)
+    if pisa_status.err:
+        return "PDF generation error", 500
+
+    pdf.seek(0)
+    filename = f"{review_status.lower()}_letter_{student_name.replace(' ', '_')}.pdf"
+    return send_file(
+        pdf,
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=filename
+    )
 
 
 if __name__ == "__main__":

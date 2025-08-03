@@ -137,6 +137,8 @@
 
     <div class="dashboard-actions">
       {% if application.status == 'submitted' %}
+      <a href="{{ url_for('view_status', application_id=application.id) }}" class="view-btn"> View Status </a>
+
 <a href="{{ url_for('download_user_pdf', app_id=application.id) }}" class="view-btn">📄 View Submitted Application</a>
       {% else %}
         <a href="{{ url_for('index') }}" class="resume-btn">▶️ Resume Application</a>

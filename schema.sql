@@ -34,3 +34,14 @@ CREATE TABLE IF NOT EXISTS activities (
     activity_org TEXT,
     activity_desc TEXT
 );
+
+CREATE TABLE letters (
+    id INTEGER PRIMARY KEY,
+    status TEXT UNIQUE NOT NULL,
+    content TEXT NOT NULL
+);
+
+INSERT INTO letters (id, status, content) VALUES
+(1, 'accepted', '<p>Dear {{ student_name }},</p><p>We are thrilled to inform you that you have been accepted into the program. We look forward to having you!</p>'),
+(2, 'rejected', '<p>Dear {{ student_name }},</p><p>Thank you for applying. Unfortunately, you have not been selected at this time.</p>'),
+(3, 'waitlisted', '<p>Dear {{ student_name }},</p><p>Your application is currently waitlisted. We will notify you if space becomes available.</p>');

@@ -45,7 +45,7 @@
   <section class="form-step active">
     <h2>Basic Information</h2>
 
-    <label>Full Student Name 
+    <label>Full Student Name
       <input name="student_name" required value="{{ draft.student_name or '' }}">
     </label>
 
@@ -54,7 +54,7 @@
         <option value="">Select</option>
         <option value="Male" {% if draft and draft.student_gender == 'Male' %}selected{% endif %}>Male</option>
         <option value="Female" {% if draft and draft.student_gender == 'Female' %}selected{% endif %}>Female</option>
-       
+
       </select>
     </label>
 
@@ -210,7 +210,7 @@
   </script>
   {% endif %}
 
-      
+
 <!-- Inject autosaved activities -->
 <script>
   window.prefilledActivities = {{ activities | tojson | safe }};
@@ -243,6 +243,3 @@
 
 </body>
 </html>
-
-
-
