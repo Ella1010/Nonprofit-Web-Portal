@@ -59,17 +59,17 @@
                 <button type="submit" class="logout-btn">Logout</button>
             </form>
         </div>
-       
 
-        {% if review_status == 'Accepted' %}
+
+        {% if review_status == 'accepted' %}
             <img id="confettiGif" src="{{ url_for('static', filename='confetti.gif') }}" class="fireworks" alt="Celebration">
             <h2>🎉 Congratulations, {{ student_name }}! 🎉</h2>
             <p>You have been <strong>accepted</strong> into the Program for Excellence in African Research 2025 cohort.</p>
             <a href="{{ url_for('download_letter', application_id=applicant_id) }}" class="btn btn-success">Download Letter</a>
-        {% elif review_status == 'Rejected' %}
+        {% elif review_status == 'rejected' %}
             <h2>Thank You, {{ student_name }}</h2>
             <p>We appreciate the time and dedication you put into your application. Due to an overwhelming number of applications, we are unable to offer you a spot in the program this year.</p>
-        {% elif review_status == 'Waitlisted' %}
+        {% elif review_status == 'waitlisted' %}
             <h2>Thank You, {{ student_name }}</h2>
             <p>We appreciate the time and dedication you put into your application. Due to an overwhelming number of applications, we are unable to offer you a spot in the program at this time. However, as a qualified candidate, we would love to offer you a spot on the waitlist.</p>
         {% else %}
