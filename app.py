@@ -457,7 +457,7 @@ def download_user_pdf(app_id):
                      download_name='PEAR_Submitted_Application.pdf')
 
 
-def generate_pdf(app, activities=[], grade_report_link=No, upload_link=None):
+def generate_pdf(app, activities=[], grade_report_link=None, upload_link=None):
     rendered = render_template("submitted_pdf.html", app=app, activities=activities, grade_report_link= grade_report_link, upload_link=upload_link)
     pdf_io = BytesIO()
     pisa_status = pisa.CreatePDF(rendered, dest=pdf_io)
