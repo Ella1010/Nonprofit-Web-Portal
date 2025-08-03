@@ -128,7 +128,7 @@
             <h2>🎉 Congratulations, {{ student_name }}! 🎉</h2>
             <p>You have been <strong>accepted</strong> into the Program for Excellence in African Research 2025 cohort.</p>
             <a href="{{ url_for('download_letter', application_id=applicant_id) }}" class="btn btn-success">Download Letter</a>
-            {% if review_status == 'accepted' %}
+    
         {% elif review_status == 'rejected' %}
             <h2>Thank You, {{ student_name }}</h2>
             <p>We appreciate the time and dedication you put into your application. Due to an overwhelming number of applications, we are unable to offer you a spot in the program this year.</p>
