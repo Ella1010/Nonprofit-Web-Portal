@@ -16,15 +16,16 @@
       padding: 0;
     }
 
-    .page {
-      width: 700px;
-      margin: 60px auto;
-      padding: 50px;
-      position: relative;
-      background: white;
-      box-sizing: border-box;
-      border: 1.5px solid #002147;
-    }
+   .page {
+  width: 700px;
+  margin: 60px auto;
+  padding: 50px;
+  position: relative;
+  background: white;
+  box-sizing: border-box;
+  border: 1.5px solid #003366; /* PEAR blue border */
+  border-radius: 6px; /* Optional: soft corners */
+}
 
     /* HEADER */
     .header-img {
@@ -41,11 +42,11 @@
     }
 
     /* CONTENT */
-    .content p {
-      font-size: 1.05em;
-      line-height: 1.6;
-      margin: 16px 0;
-    }
+    .content {
+  font-size: 1.05em;
+  line-height: 1.7;
+  text-align: justify;
+}
 
     .signature {
       margin-top: 60px;
@@ -85,7 +86,7 @@
     <img src="{{ url_for('static', filename='pear_header.png') }}" class="header-img" alt="PEAR Header" />
 
     <!-- Date -->
-    <div class="date">{{ today }}</div>
+    <span style="float: right; font-size: 0.95em;">{{ today }}</span><br><br>
 
     <!-- Letter content from DB -->
     <div class="content">
