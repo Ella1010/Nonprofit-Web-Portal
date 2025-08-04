@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Acceptance Letter</title>
+    <style>
+        body { font-family: 'Times New Roman', Times, serif; margin: 40px; }
+        .header-img {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            margin-bottom: 30px;
+            width: 180px; /* Adjust as needed */
+        }
+        .header { text-align: right; font-size: 1.1em; }
+        .content { margin-top: 40px; }
+        .signature { margin-top: 60px; }
+        .footer-img {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            margin-top: 60px;
+            width: 200px; /* Adjust as needed */
+        }
+    </style>
+</head>
+<body>
+    <img src="{{ url_for('static', filename='pear_header.png') }}" alt="Header" class="header-img">
+    <div class="header">
+        {{ today }}
+    </div>
+    <div class="content">
+        <p>Dear {{ student_name }},</p>
+        <p>
+            Congratulations! We are delighted to inform you that you have been <strong>accepted</strong> into the Program for Excellence in African Research for the 2025 Summer program. 
+        </p>
+        <p>
+            This year’s applicant pool was incredibly strong, with hundreds of applications from across the continent. In such a vast and competitive pool, you stood out as an exceptional candidate. Your distinguished record of academic excellence, personal stories, and remarkable accomplishments convinced us that you have the intellectual curiosity and potential to flourish at PEAR. 
+        </p>
+        <p>
+            As a selected participant, you will join a cohort of promising students to engage in hands-on STEM learning, mentorship, and collaborative research. The program is designed to both challenge and support you, and we are confident you will contribute meaningfully to the PEAR community.
+        </p>
+        <p>
+            In the coming days, you will receive a detailed onboarding packet with important information about the program schedule, logistics, consent forms and preparation materials. Please keep an eye on your email and feel free to reach out with any questions.
+        </p>
+        <p>
+            To confirm your spot in the program, please complete the confirmation form below the page by <strong>Thursday August 7th, 2025</strong>.  Failure to confirm by this date may result in your spot being offered to another applicant on the waitlist.
+        </p>
+        <p>
+            Once again congratulations on your acceptance! We look forward to seeing the impact you will make this summer.
+        </p>
+        <p>
+            Warm regards,
+        </p>
+        <div class="signature">
+            The PEAR Team<br>
+            admin@pearafrica.org
+        </div>
+    </div>
+    <img src="{{ url_for('static', filename='pear_footer.png') }}" alt="Footer" class="footer-img">
+</body>
+</html>

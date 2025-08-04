@@ -980,6 +980,59 @@ def download_letter(application_id):
         download_name=filename
     )
 
+from datetime import datetime
+
+@app.route('/download_letter/<int:application_id>')
+@login_required
+def download_letter(application_id):
+    conn = get_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+    # Fetch student name and review status for this application
+    cursor.execute("SELECT student_name, review_status FROM applications WHERE id = %s AND user_id = %s", (application_id, session["user_id"]))
+    result = cursor.fetchone()
+
+    if not result:
+        conn.close()
+        return "Applicant not found", 404
+
+    student_name = result["student_name"]
+    review_status = result["review_status"]
+
+    # Fetch letter template/content for this review status
+    cursor.execute("SELECT content FROM letters WHERE status = %s", (review_status,))
+    letter = cursor.fetchone()
+    conn.close()
+
+    if not letter:
+        return f"No letter found for status '{review_status}'", 404
+
+    # Replace placeholder in letter content (if needed)
+    content = letter["content"].replace("{{ student_name }}", student_name)
+
+    # Use the template and pass all needed variables
+    html = render_template(
+        "letter_pdf_template.html",
+        content=content,
+        student_name=student_name,
+        review_status=review_status,
+        today=datetime.now().strftime("%B %d, %Y")
+    )
+
+    # Convert HTML to PDF
+    pdf = BytesIO()
+    pisa_status = pisa.CreatePDF(html, dest=pdf)
+    if pisa_status.err:
+        return "PDF generation error", 500
+
+    pdf.seek(0)
+    filename = f"{review_status.lower()}letter{student_name.replace(' ', '_')}.pdf"
+    return send_file(
+        pdf,
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=filename
+    )
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
