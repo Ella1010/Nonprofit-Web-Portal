@@ -23,6 +23,11 @@ from pytz import timezone
 import zipfile
 from zipfile import ZipFile
 from reportlab.pdfgen import canvas
+from weasyprint import HTML, CSS
+import tempfile
+
+
+
 
 
 
@@ -959,30 +964,26 @@ def download_letter(application_id):
     if not letter:
         return f"No letter found for status '{review_status}'", 404
 
-    # Replace placeholder in letter content (if needed)
+    # Replace placeholder in letter content
+    content = letter["content"].replace("{{ student_name }}", student_name)
 
-    content = letter["content"].replace("{{ student_name }}", student_name).replace("\n", "<br>")
-
-
-    # Use the template and pass all needed variables
-    html = render_template(
-        "letter_pdf_template.html",
+    # Render HTML template
+    html_content = render_template(
+        "weasyprint_letter_template.html",
         content=content,
         student_name=student_name,
         review_status=review_status,
         today=datetime.now().strftime("%B %d, %Y")
     )
 
-    # Convert HTML to PDF
-    pdf = BytesIO()
-    pisa_status = pisa.CreatePDF(html, dest=pdf)
-    if pisa_status.err:
-        return "PDF generation error", 500
+    # Generate PDF with WeasyPrint
+    pdf_buffer = BytesIO()
+    HTML(string=html_content, base_url=request.url_root).write_pdf(pdf_buffer)
+    pdf_buffer.seek(0)
 
-    pdf.seek(0)
-    filename = f"{review_status.lower()}letter{student_name.replace(' ', '_')}.pdf"
+    filename = f"{review_status.lower()}_letter_{student_name.replace(' ', '_')}.pdf"
     return send_file(
-        pdf,
+        pdf_buffer,
         mimetype='application/pdf',
         as_attachment=True,
         download_name=filename
