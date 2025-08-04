@@ -969,7 +969,7 @@ def download_letter(application_id):
 
     # Render HTML template
     html_content = render_template(
-        "weasyprint_letter_template.html",
+        "letter_pdf_template.html",
         content=content,
         student_name=student_name,
         review_status=review_status,
