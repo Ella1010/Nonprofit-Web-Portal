@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Acceptance Letter</title>
+  <title>PEAR Acceptance Letter</title>
   <style>
     @page {
       size: A4;
@@ -14,94 +14,142 @@
       background: white;
       margin: 0;
       padding: 0;
+      color: #333;
+      line-height: 1.6;
+      position: relative;
     }
 
-   .page {
-  width: 700px;
-  margin: 60px auto;
-  padding: 50px;
-  position: relative;
-  background: white;
-  box-sizing: border-box;
-  border: 1.5px solid #003366; /* PEAR blue border */
-  border-radius: 6px; /* Optional: soft corners */
-}
-
-    /* HEADER */
+    /* Header image */
     .header-img {
       display: block;
       margin: 0 auto 30px;
-      width: 100%;
-      max-height: 100px;
+      max-width: 100%;
+      height: auto;
+      max-height: 120px;
     }
 
-    .date {
-      text-align: right;
-      font-size: 0.95em;
-      margin-bottom: 30px;
-    }
-
-    /* CONTENT */
-    .content {
-  font-size: 1.05em;
-  line-height: 1.7;
-  text-align: justify;
-}
-
-    .signature {
-      margin-top: 60px;
-    }
-
-    .signature img {
-      height: 60px;
-      margin-bottom: 10px;
-    }
-
-    /* FOOTER */
-    .footer-img {
-      display: block;
-      margin: 60px auto 0;
-      width: 100%;
-      max-height: 60px;
-    }
-
-    /* WATERMARK */
+    /* Watermark */
     .watermark {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      opacity: 0.03;
+      opacity: 0.05;
       width: 400px;
       z-index: -1;
+    }
+
+    .date {
+      text-align: right;
+      font-size: 11pt;
+      margin: 30px 0;
+      color: #333;
+    }
+
+    .content {
+      font-size: 12pt;
+      line-height: 1.7;
+      text-align: justify;
+      margin: 30px 0;
+    }
+
+    .content p {
+      margin: 16px 0;
+    }
+
+    .signature-section {
+      margin-top: 50px;
+    }
+
+    .signature-img {
+      max-width: 200px;
+      height: auto;
+      margin: 20px 0 10px 0;
+    }
+
+    .organization {
+      font-weight: bold;
+      color: #003366;
+      margin-top: 15px;
+      font-size: 11pt;
+    }
+
+    .footer-img {
+      display: block;
+      margin: 40px auto 0;
+      max-width: 100%;
+      height: auto;
+      max-height: 80px;
+    }
+
+    /* Fallback styling if no images */
+    .letterhead {
+      text-align: center;
+      margin-bottom: 30px;
+      padding: 20px 0;
+      border-bottom: 2px solid #003366;
+    }
+
+    .letterhead h1 {
+      color: #003366;
+      font-size: 24pt;
+      margin: 0;
+      font-weight: bold;
+    }
+
+    .letterhead h2 {
+      color: #666;
+      font-size: 12pt;
+      margin: 5px 0 0 0;
+      font-weight: normal;
     }
   </style>
 </head>
 <body>
-  <div class="page">
-    <!-- Watermark -->
-    <img src="{{ url_for('static', filename='pear_watermark.png') }}" class="watermark" alt="Watermark" />
+  <!-- Watermark - use base64 if available, otherwise skip -->
+  {% if watermark_base64 %}
+    <img src="data:image/png;base64,{{ watermark_base64 }}" class="watermark" alt="Watermark" />
+  {% endif %}
 
-    <!-- Header -->
-    <img src="{{ url_for('static', filename='pear_header.png') }}" class="header-img" alt="PEAR Header" />
-
-    <!-- Date -->
-    <span style="float: right; font-size: 0.95em;">{{ today }}</span><br><br>
-
-    <!-- Letter content from DB -->
-    <div class="content">
-      {{ content | safe }}
+  <!-- Header - use base64 if available, otherwise use text fallback -->
+  {% if header_base64 %}
+    <img src="data:image/png;base64,{{ header_base64 }}" class="header-img" alt="PEAR Header" />
+  {% else %}
+    <div class="letterhead">
+      <h1>PEAR</h1>
+      <h2>Program for Excellence in African Research</h2>
     </div>
+  {% endif %}
 
-    <!-- Signature -->
-    <div class="signature">
-      <img src="{{ url_for('static', filename='pear_signature.png') }}" alt="Signature" />
-      <br />
-      PEARAfrica
-    </div>
+  <!-- Date -->
+  <div class="date">{{ today }}</div>
 
-    <!-- Footer -->
-    <img src="{{ url_for('static', filename='pear_footer.png') }}" class="footer-img" alt="PEAR Footer" />
+  <!-- Letter Content -->
+  <div class="content">
+    {{ content | safe }}
   </div>
+
+  <!-- Signature Section -->
+  <div class="signature-section">
+    <p>Warm regards,</p>
+
+    <!-- Signature image - use base64 if available -->
+    {% if signature_base64 %}
+      <img src="data:image/png;base64,{{ signature_base64 }}" class="signature-img" alt="Signature" />
+    {% else %}
+      <br><br>
+    {% endif %}
+
+    <div class="organization">
+      The PEAR Team<br>
+      Program for Excellence in African Research
+    </div>
+  </div>
+
+  <!-- Footer - use base64 if available -->
+  {% if footer_base64 %}
+    <img src="data:image/png;base64,{{ footer_base64 }}" class="footer-img" alt="PEAR Footer" />
+  {% endif %}
+
 </body>
 </html>

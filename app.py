@@ -25,6 +25,7 @@ from zipfile import ZipFile
 from reportlab.pdfgen import canvas
 from weasyprint import HTML, CSS
 import tempfile
+import base64
 
 
 
@@ -936,6 +937,17 @@ def view_status(application_id):
     )
 
 
+def image_to_base64(image_path):
+    """Convert image file to base64 string"""
+    try:
+        with open(image_path, "rb") as img_file:
+            return base64.b64encode(img_file.read()).decode('utf-8')
+    except FileNotFoundError:
+        print(f"Image not found: {image_path}")
+        return None
+    except Exception as e:
+        print(f"Error reading image {image_path}: {e}")
+        return None
 
 
 # --- Dynamic Letter Download ---
@@ -964,8 +976,18 @@ def download_letter(application_id):
     if not letter:
         return f"No letter found for status '{review_status}'", 404
 
+
     # Replace placeholder in letter content
     content = letter["content"].replace("{{ student_name }}", student_name)
+
+    # Convert images to base64 (adjust paths to your actual image locations)
+    static_dir = os.path.join(app.root_path, 'static')
+
+    header_base64 = image_to_base64(os.path.join(static_dir, 'pear_header.png'))
+    watermark_base64 = image_to_base64(os.path.join(static_dir, 'pear_watermark.png'))
+    signature_base64 = image_to_base64(os.path.join(static_dir, 'pear_signature.png'))
+    footer_base64 = image_to_base64(os.path.join(static_dir, 'pear_footer.png'))
+
 
     # Render HTML template
     html_content = render_template(
@@ -974,20 +996,32 @@ def download_letter(application_id):
         student_name=student_name,
         review_status=review_status,
         today=datetime.now().strftime("%B %d, %Y")
+        header_base64=header_base64,
+        watermark_base64=watermark_base64,
+        signature_base64=signature_base64,
+        footer_base64=footer_base64
     )
 
     # Generate PDF with WeasyPrint
     pdf_buffer = BytesIO()
-    HTML(string=html_content, base_url=request.url_root).write_pdf(pdf_buffer)
-    pdf_buffer.seek(0)
+    try:
+        # No base_url needed for base64 images
+        HTML(string=html_content).write_pdf(pdf_buffer)
+        pdf_buffer.seek(0)
 
-    filename = f"{review_status.lower()}_letter_{student_name.replace(' ', '_')}.pdf"
-    return send_file(
-        pdf_buffer,
-        mimetype='application/pdf',
-        as_attachment=True,
-        download_name=filename
-    )
+        filename = f"{review_status.lower()}_letter_{student_name.replace(' ', '_')}.pdf"
+        return send_file(
+            pdf_buffer,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=filename
+        )
+    except Exception as e:
+        print(f"PDF generation error: {e}")
+        return "PDF generation failed", 500
+
+
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
