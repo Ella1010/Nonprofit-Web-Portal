@@ -163,9 +163,10 @@
 
 {% if review_status == 'accepted' %}
   <div style="display: flex; justify-content: space-between; margin-top: 30px;">
-    <a href="{{ url_for('static', filename='accepted_letters/acceptance_letter_{{ student_name }}.pdf') }}" download>
+    <a href="{{ url_for('static', filename='accepted_letters/' ~ 'acceptance_letter_' ~ student_name ~ '.pdf') }}" download>
   Download Your Acceptance Letter
 </a>
+
 
     <a href="https://docs.google.com/forms/d/e/1FAIpQLSdH2dedLncXMGMgVHcms7AE5jo0SkRNge103hZYRgltDvORBA/viewform?usp=sharing&ouid=118261173585093180019"
        target="_blank"

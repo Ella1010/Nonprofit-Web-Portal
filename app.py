@@ -923,7 +923,12 @@ def view_status(application_id):
     student_name = result["student_name"]
     review_status = result["review_status"]
 
-    # Get the matching letter from letters table
+     # Construct letter filename: match format like "acceptance_letter_David Oluwafikunayomi Ogunbe.pdf"
+    letter_filename = None
+    if review_status == 'accepted':
+        letter_filename = f"acceptance_letter_{student_name}.pdf"
+
+    #Get the matching letter from letters table
     cursor.execute("SELECT content FROM letters WHERE status = %s", (review_status,))
     letter = cursor.fetchone()
     conn.close()
@@ -931,7 +936,7 @@ def view_status(application_id):
     if not letter:
         return f"No letter found for status '{review_status}'", 404
 
-    letter_content = letter["content"].replace("{{ student_name }}", student_name).replace("\n", "<br>")
+    letter_content = letter["content"].replace("{{ student_name }}", student_name)
 
 
     return render_template(
