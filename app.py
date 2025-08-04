@@ -995,7 +995,7 @@ def download_letter(application_id):
         content=content,
         student_name=student_name,
         review_status=review_status,
-        today=datetime.now().strftime("%B %d, %Y")
+        today=datetime.now().strftime("%B %d, %Y"),
         header_base64=header_base64,
         watermark_base64=watermark_base64,
         signature_base64=signature_base64,
