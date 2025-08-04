@@ -63,6 +63,26 @@
             background: transparent;
         }
 
+        .btn {
+  padding: 10px 20px;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: 500;
+  display: inline-block;
+  text-align: center;
+}
+
+.btn-success {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+}
+
+
 
 
 
@@ -124,17 +144,12 @@
 
 
         {% if review_status == 'accepted' %}
-            
+
             <h2>🎉 Congratulations, {{ student_name }}! 🎉</h2>
-            <p>You have been <strong>accepted</strong> into the Program for Excellence in African Research 2025 cohort.</p>
-            <a href="{{ url_for('download_letter', application_id=applicant_id) }}" class="btn btn-success">Download Letter</a>
-    
         {% elif review_status == 'rejected' %}
-            <h2>Thank You, {{ student_name }}</h2>
-            <p>We appreciate the time and dedication you put into your application. Due to an overwhelming number of applications, we are unable to offer you a spot in the program this year.</p>
+            <h2>Thank you, {{ student_name }}</h2>
         {% elif review_status == 'waitlisted' %}
             <h2>Thank You, {{ student_name }}</h2>
-            <p>We appreciate the time and dedication you put into your application. Due to an overwhelming number of applications, we are unable to offer you a spot in the program at this time. However, as a qualified candidate, we would love to offer you a spot on the waitlist.</p>
         {% else %}
             <h2>Hello, {{ student_name }}</h2>
             <p>Your application is currently <strong>under review</strong>. Please check back later.</p>
@@ -145,6 +160,21 @@
                 {{ letter_content | safe }}
             </div>
         {% endif %}
+
+{% if review_status == 'accepted' %}
+  <div style="display: flex; justify-content: space-between; margin-top: 30px;">
+    <a href="{{ url_for('static', filename='accepted_letters/' ~ letter_filename) }}" class="btn btn-success" download>
+      Download Your Acceptance Letter
+    </a>
+    <a href="https://docs.google.com/forms/d/e/1FAIpQLSdH2dedLncXMGMgVHcms7AE5jo0SkRNge103hZYRgltDvORBA/viewform?usp=sharing&ouid=118261173585093180019"
+       target="_blank"
+       class="btn btn-primary">
+      Confirm Your Spot
+    </a>
+  </div>
+{% endif %}
+
+
     </div>
 
     <script>
