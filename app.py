@@ -919,7 +919,8 @@ def view_status(application_id):
     if not letter:
         return f"No letter found for status '{review_status}'", 404
 
-    letter_content = letter["content"].replace("{{ student_name }}", student_name)
+    letter_content = letter["content"].replace("{{ student_name }}", student_name).replace("\n", "<br>")
+
 
     return render_template(
         'view_status.html',
@@ -959,7 +960,9 @@ def download_letter(application_id):
         return f"No letter found for status '{review_status}'", 404
 
     # Replace placeholder in letter content (if needed)
-    content = letter["content"].replace("{{ student_name }}", student_name)
+
+    content = letter["content"].replace("{{ student_name }}", student_name).replace("\n", "<br>")
+
 
     # Use the template and pass all needed variables
     html = render_template(
