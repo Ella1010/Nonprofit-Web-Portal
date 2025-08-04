@@ -23,9 +23,15 @@ from pytz import timezone
 import zipfile
 from zipfile import ZipFile
 from reportlab.pdfgen import canvas
-from weasyprint import HTML, CSS
 import tempfile
 import base64
+# WeasyPrint import - make sure this doesn't conflict
+try:
+    from weasyprint import HTML, CSS
+    WEASYPRINT_AVAILABLE = True
+except ImportError:
+    print("WeasyPrint not available, using xhtml2pdf only")
+    WEASYPRINT_AVAILABLE = False
 
 
 
@@ -976,7 +982,6 @@ def download_letter(application_id):
     if not letter:
         return f"No letter found for status '{review_status}'", 404
 
-
     # Replace placeholder in letter content
     content = letter["content"].replace("{{ student_name }}", student_name)
 
@@ -987,7 +992,6 @@ def download_letter(application_id):
     watermark_base64 = image_to_base64(os.path.join(static_dir, 'pear_watermark.png'))
     signature_base64 = image_to_base64(os.path.join(static_dir, 'pear_signature.png'))
     footer_base64 = image_to_base64(os.path.join(static_dir, 'pear_footer.png'))
-
 
     # Render HTML template
     html_content = render_template(
@@ -1002,24 +1006,23 @@ def download_letter(application_id):
         footer_base64=footer_base64
     )
 
-    # Generate PDF with WeasyPrint
+    # Generate PDF using xhtml2pdf (same as your other PDF functions)
     pdf_buffer = BytesIO()
-    try:
-        # No base_url needed for base64 images
-        HTML(string=html_content).write_pdf(pdf_buffer)
-        pdf_buffer.seek(0)
+    pisa_status = pisa.CreatePDF(html_content, dest=pdf_buffer)
 
-        filename = f"{review_status.lower()}_letter_{student_name.replace(' ', '_')}.pdf"
-        return send_file(
-            pdf_buffer,
-            mimetype='application/pdf',
-            as_attachment=True,
-            download_name=filename
-        )
-    except Exception as e:
-        print(f"PDF generation error: {e}")
+    if pisa_status.err:
+        print(f"PDF generation error: {pisa_status.err}")
         return "PDF generation failed", 500
 
+    pdf_buffer.seek(0)
+    filename = f"{review_status.lower()}_letter_{student_name.replace(' ', '_')}.pdf"
+
+    return send_file(
+        pdf_buffer,
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=filename
+    )
 
 
 
