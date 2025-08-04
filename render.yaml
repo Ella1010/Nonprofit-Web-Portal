@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: pear-portal
+    env: python
+    buildCommand: |
+      apt-get update
+      apt-get install -y libpango1.0-0 libgdk-pixbuf2.0-0 libcairo2 libffi-dev
+      pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    plan: free
