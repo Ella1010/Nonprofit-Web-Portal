@@ -25,7 +25,9 @@ from zipfile import ZipFile
 from reportlab.pdfgen import canvas
 import tempfile
 import base64
-# WeasyPrint import - make sure this doesn't conflict
+
+
+# WeasyPrint import
 try:
     from weasyprint import HTML, CSS
     WEASYPRINT_AVAILABLE = True
@@ -65,16 +67,6 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# --- USERS TABLE CREATION (run once in your DB) ---
-"""
-CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
-    email TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
-    student_name TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-"""
 
 
 
@@ -87,7 +79,7 @@ def get_application_by_user(user_id):
     conn.close()
     return application
 
-# --- REGISTRATION ROUTE ---
+# REGISTRATION ROUTE
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -114,11 +106,11 @@ def register():
     return render_template("register.html")
 
 
-# --- APPLICANT LOGIN ROUTE ---
+# APPLICANT LOGIN ROUTE
 
 
 
-# --- LOGOUT FOR USERS ---
+# LOGOUT FOR USERS
 @app.route('/logout_user')
 def logout_user():
     session.pop('user_id', None)
@@ -243,7 +235,7 @@ def index():
 @login_required
 def submit():
 
-     # === Deadline check ===
+     # Deadline check
     deadline = datetime(2025, 7, 26, 23, 25, 0, tzinfo=timezone.utc)  # 12:20 AM WAT = 11:20 PM UTC
     now = datetime.now(timezone.utc)
 
@@ -480,7 +472,7 @@ def generate_pdf(app, activities=[], grade_report_link=None, upload_link=None):
 @app.route("/admin/download_all_pdfs")
 def download_all_pdfs():
     if not session.get("admin"):
-        return redirect(url_for("login"))  # or "admin_login" if that's your route
+        return redirect(url_for("login"))
 
     conn = get_connection()
     cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
@@ -536,7 +528,7 @@ def download_all_pdfs():
 @app.route('/autosave', methods=['POST'])
 def autosave():
 
-      # === Deadline check ===
+      # Deadline check
 
     deadline = datetime(2025, 7, 26, 23, 25, 0, tzinfo=timezone.utc)  # 12:20 AM WAT = 11:20 PM UTC
     now = datetime.now(timezone.utc)
@@ -641,55 +633,6 @@ def autosave():
 
 
 
-# @app.route('/autosave', methods=['POST'])
-# def autosave():
-#     if not session.get("user_id"):
-#         return {"error": "Not logged in"}, 401
-
-#     user_id = session["user_id"]
-
-#     fields = [
-#         "student_name", "student_gender", "student_gender_other", "dob", "email", "phone", "grade",
-#         "parent_name", "parent_contact", "school_name", "school_location", "school_contact",
-#         "teacher_name", "teacher_contact", "teacher_email", "subjects", "interests",
-#         "accommodation_required", "accommodation_comment",
-#         "essay1", "essay2", "essay3", "optional_info"
-#     ]
-
-#     data = {f: clean_input(request.form.get(f, '')) for f in fields}
-
-#     conn = get_connection()
-#     cursor = conn.cursor()
-
-#     cursor.execute("SELECT id, status FROM applications WHERE user_id = %s ORDER BY id DESC LIMIT 1", (user_id,))
-#     existing = cursor.fetchone()
-
-#     if existing:
-#         app_id, status = existing
-#         if status == "submitted":
-#             conn.close()
-#             return {"error": "Application already submitted"}, 403
-
-#         update_fields = ", ".join([f"{k} = %s" for k in data.keys()])
-#         cursor.execute(f"""
-#             UPDATE applications SET {update_fields}
-#             WHERE id = %s
-#         """, list(data.values()) + [app_id])
-#     else:
-#         fields_str = ", ".join(data.keys())
-#         placeholders = ", ".join(["%s"] * len(data))
-#         cursor.execute(f"""
-#             INSERT INTO applications (user_id, status, {fields_str})
-#             VALUES (%s, 'incomplete', {placeholders})
-#         """, [user_id] + list(data.values()))
-
-#     conn.commit()
-#     conn.close()
-#     return {"success": True}
-
-
-
-
 @app.route('/confirmation')
 def confirmation():
     return render_template('confirmation.html')
@@ -716,6 +659,8 @@ def login():
     return render_template("login.html")
 
 
+
+# Admin route
 @app.route('/admin')
 def admin():
 
@@ -818,7 +763,7 @@ def login_user():
             session['user_id'] = user['id']
             session['email'] = user['email']
             session['student_name'] = user['student_name']
-            return redirect(url_for('dashboard'))  # ✅ Go to dashboard
+            return redirect(url_for('dashboard'))  # Go to dashboard
 
         else:
             return render_template("login_user.html", error="Invalid email or password.")
@@ -834,7 +779,7 @@ def logout():
 @app.route('/logout_user_dashboard')
 def logout_user_dashboard():
     session.clear()
-    return redirect(url_for('login_user'))  # 👈 Redirect to login page after logout
+    return redirect(url_for('login_user'))  # Redirect to login page after logout
 
 
 # Token Serializer
@@ -961,7 +906,7 @@ def image_to_base64(image_path):
         return None
 
 
-# --- Dynamic Letter Download ---
+# Dynamic Letter Download
 @app.route('/download_letter/<int:application_id>')
 @login_required
 def download_letter(application_id):

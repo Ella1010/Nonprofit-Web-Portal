@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
-  // ====== Multi-step Form Navigation ======
+  //  Multi-step Form Navigation 
   const steps = Array.from(document.querySelectorAll('.form-step'));
   const progressSteps = document.querySelectorAll('.progress-step');
   const nextBtns = document.querySelectorAll('.next-btn');
@@ -120,7 +120,6 @@ function generateReviewContent() {
   // Render basic blocks
   document.getElementById('review-content').innerHTML = sections.join("\n");
 
-  // ✅ ADD THIS — render activities block
   const activityTypes = formData.getAll("activity_type[]");
   const positions = formData.getAll("activity_position[]");
   const orgs = formData.getAll("activity_org[]");
@@ -216,7 +215,7 @@ nextBtns.forEach(btn => {
   enforceWordLimit(document.querySelector('textarea[name="essay2"]'), 200);
   enforceWordLimit(document.querySelector('textarea[name="essay3"]'), 150);
 
-  // ====== Activity Block Add/Remove ======
+  // Activity Block Add/Remove
   const addBtn = document.getElementById('add-activity');
   const container = document.getElementById('activities-container');
 
@@ -283,7 +282,7 @@ if (window.prefilledActivities && window.prefilledActivities.length) {
 }
 
 
-// ====== File Size Validation (5MB limit) ======
+// File Size Validation (5MB limit)
 const maxSize = 5 * 1024 * 1024; // 5MB
 const fileInputs = document.querySelectorAll('input[type="file"]');
 
@@ -308,8 +307,7 @@ fileInputs.forEach(input => {
 
 
 
-  // ====== Final Validation Before Submit ======
-
+  // Final Validation Before Submit 
 
 
 
@@ -317,7 +315,7 @@ fileInputs.forEach(input => {
 
 document.getElementById('application-form').addEventListener('submit', function (e) {
 
-  // ✅ Validate required fields and highlight them
+  // Validate required fields and highlight them
   let formValid = true;
   const missingFields = [];
   let firstInvalidField = null;
@@ -352,12 +350,10 @@ document.getElementById('application-form').addEventListener('submit', function 
     return;
   }
 
-  // 🔽 Your other validations (email domain, word count, etc.) go below here
 
 
 
-
-// === Enhanced Email Domain Validation ===
+// Enhanced Email Domain Validation 
 const emailField = document.querySelector('input[name="email"]');
 const email = emailField?.value.trim().toLowerCase();
 
